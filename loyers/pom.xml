@@ -5,6 +5,7 @@
 	<packaging>pom</packaging>
 	<modules>
 		<module>loyer-core-api</module>
+		<module>service-immolier-api</module>
 
 	</modules>
 	<parent>
