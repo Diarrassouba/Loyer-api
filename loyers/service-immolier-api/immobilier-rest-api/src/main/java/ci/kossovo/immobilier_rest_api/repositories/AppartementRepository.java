@@ -6,4 +6,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AppartementRepository extends JpaRepository<Appartement, String> {
+
+    // Méthode personnalisée pour trouver tous les appartements d'une maison
+    List<Appartement> findByMaisonId(String maisonId);
 }
