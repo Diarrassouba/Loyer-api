@@ -17,8 +17,7 @@ import lombok.Setter;
 @Setter
 public class Maison {
 
-  @Id
-  private String id = UUID.randomUUID().toString();
+  @Id private String id = UUID.randomUUID().toString();
 
   @Column(nullable = false, length = 10)
   private String ILot;
@@ -34,8 +33,16 @@ public class Maison {
 
   private int anneeConstruction;
 
-  @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "maison_id", nullable = false)
+  // Relation: Une maison a plusieurs appartements.
+  // 'mappedBy="maison"' indique que l'entité Appartement gère la clé étrangère.
+  // 'cascade = CascadeType.ALL' propage les opérations (save, delete) aux appartements liés.
+  // 'orphanRemoval = true' supprime un appartement de la BDD s'il est retiré de cette liste.
+
+  @OneToMany(
+      mappedBy = "maison",
+      cascade = CascadeType.ALL,
+      fetch = FetchType.LAZY,
+      orphanRemoval = true)
   private List<Appartement> appartements = new ArrayList<>();
 
   public void addAppartement(Appartement appartement) {

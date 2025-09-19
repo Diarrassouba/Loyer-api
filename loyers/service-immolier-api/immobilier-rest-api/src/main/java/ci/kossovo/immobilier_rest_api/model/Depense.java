@@ -14,8 +14,7 @@ import lombok.Setter;
 @Setter
 public class Depense {
 
-  @Id
-  private String id = UUID.randomUUID().toString();
+  @Id private String id = UUID.randomUUID().toString();
 
   @Column(nullable = false)
   private BigDecimal montant;
