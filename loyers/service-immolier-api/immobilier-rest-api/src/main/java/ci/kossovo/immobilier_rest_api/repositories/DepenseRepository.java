@@ -6,8 +6,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface DepenseRepository extends JpaRepository<Depense, String> {
-
-    // Méthodes pour trouver les dépenses par bien
-    List<Depense> findByMaisonId(String maisonId);
-    List<Depense> findByAppartementId(String appartementId);
+  // Méthodes pour trouver les dépenses par bien
+  List<Depense> findByMaisonId(String maisonId);
+  List<Depense> findByAppartementId(String appartementId);
 }

@@ -28,7 +28,7 @@ public class Depense {
 
   @Enumerated(EnumType.STRING) // Stocke le nom de l'enum ("REPARATION") en BDD
   @Column(nullable = false)
-  private Type typeDepense;
+  private TypeDepense typeDepense;
 
   // La dépense est liée soit à une maison, soit à un appartement.
   // Ces champs sont des clés étrangères "manuelles" car la relation est polymorphe.
