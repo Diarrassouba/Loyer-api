@@ -4,6 +4,7 @@ import ci.kossovo.immobilier_rest_api.dtos.MaisonRequestDTO;
 import ci.kossovo.immobilier_rest_api.dtos.MaisonResponseDTO;
 import ci.kossovo.immobilier_rest_api.services.MaisonService;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -43,11 +44,10 @@ public class MaisonController {
 
     return ResponseEntity.ok(maisonService.updateMaison(id, requestDTO));
   }
+
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> deleteMaison(@PathVariable String id) {
     maisonService.deleteMaison(id);
     return ResponseEntity.noContent().build();
   }
-
-  
 }

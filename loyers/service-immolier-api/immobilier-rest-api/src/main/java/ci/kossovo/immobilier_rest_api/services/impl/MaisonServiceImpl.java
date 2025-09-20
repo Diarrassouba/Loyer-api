@@ -4,18 +4,18 @@ import ci.kossovo.immobilier_rest_api.dtos.AppartementRequestDTO;
 import ci.kossovo.immobilier_rest_api.dtos.AppartementResponseDTO;
 import ci.kossovo.immobilier_rest_api.dtos.MaisonRequestDTO;
 import ci.kossovo.immobilier_rest_api.dtos.MaisonResponseDTO;
-import ci.kossovo.immobilier_rest_api.events.AppartementAddedToMaisonEvent;
-import ci.kossovo.immobilier_rest_api.events.MaisonCreatedEvent;
-import ci.kossovo.immobilier_rest_api.mappers.PropertyMapper;
-import ci.kossovo.immobilier_rest_api.models.Appartement;
-import ci.kossovo.immobilier_rest_api.models.Maison;
+import ci.kossovo.immobilier_rest_api.mappers.ImmobilierMapper;
+import ci.kossovo.immobilier_rest_api.model.Appartement;
+import ci.kossovo.immobilier_rest_api.model.Maison;
 import ci.kossovo.immobilier_rest_api.repositories.AppartementRepository;
 import ci.kossovo.immobilier_rest_api.repositories.MaisonRepository;
 import ci.kossovo.immobilier_rest_api.services.MaisonService;
+import ci.kossovo.loyer_core_api.events.immobiliers.AppartementAddedToMaisonEvent;
+import ci.kossovo.loyer_core_api.events.immobiliers.MaisonCreatedEvent;
 // Custom exception for Maison not found
 import ci.kossovo.loyer_core_api.exceptions.MaisonNotFoundException;
 import java.util.List;
-import org.springframework.cloud.stream.function.EventGateway;
+import org.axonframework.eventhandling.gateway.EventGateway;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,13 +25,13 @@ public class MaisonServiceImpl implements MaisonService {
 
   private final MaisonRepository maisonRepository;
   private final AppartementRepository appartementRepository;
-  private final PropertyMapper mapper;
+  private final ImmobilierMapper mapper;
   private final EventGateway eventGateway;
 
   public MaisonServiceImpl(
       MaisonRepository maisonRepository,
       AppartementRepository appartementRepository,
-      PropertyMapper mapper,
+      ImmobilierMapper mapper,
       EventGateway eventGateway) {
     this.maisonRepository = maisonRepository;
     this.appartementRepository = appartementRepository;
@@ -47,7 +47,7 @@ public class MaisonServiceImpl implements MaisonService {
     // 2. Persister l'entité
     maison = maisonRepository.save(maison);
     // 3. Publier l'événement de domaine
-    eventGateway.publishEvent(
+    eventGateway.publish(
         new MaisonCreatedEvent(
             maison.getId(),
             maison.getILot(),
@@ -88,7 +88,7 @@ public class MaisonServiceImpl implements MaisonService {
     mapper.updateMaisonFromDto(maisonDTO, maison);
     Maison updatedMaison = maisonRepository.save(maison);
     // On pourrait publier un événement MaisonMiseAJourEvenement si nécessaire
-    eventGateway.publishEvent(
+    eventGateway.publish(
         new MaisonCreatedEvent(
             updatedMaison.getId(),
             updatedMaison.getILot(),
@@ -127,7 +127,7 @@ public class MaisonServiceImpl implements MaisonService {
     // La sauvegarde de la maison persiste aussi l'appartement
     maisonRepository.save(maison);
 
-    eventGateway.publishEvent(
+    eventGateway.publish(
         new AppartementAddedToMaisonEvent(
             appartement.getId(),
             appartement.getReference(),
@@ -144,7 +144,11 @@ public class MaisonServiceImpl implements MaisonService {
     if (!maisonRepository.existsById(maisonId)) {
       throw new MaisonNotFoundException("Maison non trouvée avec l'ID: " + maisonId);
     }
-
-    return mapper.toAppartementResponseDTOList(appartementRepository.findByMaisonId(maisonId));
+    // Récupérer les appartements liés à la maison
+    // et les mapper en DTOs de réponse
+    List<Appartement> appartements = appartementRepository.findByMaisonId(maisonId);
+    return mapper.toAppartementsResponseDTOs(appartements);
   }
+
+  
 }

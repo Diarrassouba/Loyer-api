@@ -8,16 +8,21 @@ import java.util.List;
 
 public interface MaisonService {
   // --- Opérations sur les Maisons ---
+
+  // --- Opérations sur les Maisons ---
   MaisonResponseDTO createMaison(MaisonRequestDTO maisonDTO);
+
   List<MaisonResponseDTO> findAllMaisons();
+
   MaisonResponseDTO findMaisonById(String id);
+
   MaisonResponseDTO updateMaison(String id, MaisonRequestDTO maisonDTO);
+
   void deleteMaison(String id);
 
   // --- Opérations sur les Appartements ---
   AppartementResponseDTO addAppartementToMaison(
-    String maisonId,
-    AppartementRequestDTO appartementDTO
-  );
+      String maisonId, AppartementRequestDTO appartementDTO);
+
   List<AppartementResponseDTO> findAppartementsByMaisonId(String maisonId);
 }

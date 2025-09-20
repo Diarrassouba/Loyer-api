@@ -1,6 +1,7 @@
 package ci.kossovo.immobilier_rest_api.repositories;
 
 import ci.kossovo.immobilier_rest_api.model.Depense;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
