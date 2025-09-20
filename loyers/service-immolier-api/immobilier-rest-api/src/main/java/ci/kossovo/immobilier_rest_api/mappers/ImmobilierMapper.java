@@ -19,9 +19,15 @@ public interface ImmobilierMapper {
 
   List<MaisonResponseDTO> toMaisonResponseDTOs(List<Maison> maisons);
 
+  @Mapping(target = "id", ignore = true)
+  @Mapping(target = "appartements", ignore = true)
+  @Mapping(target = "ILot", ignore = true)
   Maison toMaison(MaisonRequestDTO dto);
 
   // Pour les mises à jour (PUT), pour ne pas écraser l'ID
+  @Mapping(target = "id", ignore = true)
+  @Mapping(target = "appartements", ignore = true)
+  @Mapping(target = "ILot", ignore = true)
   void updateMaisonFromDto(MaisonRequestDTO dto, @MappingTarget Maison maison);
 
   // --- MAPPERS POUR APPARTEMENT ---
@@ -31,6 +37,9 @@ public interface ImmobilierMapper {
 
   List<AppartementResponseDTO> toAppartementsResponseDTOs(List<Appartement> appartements);
 
+  @Mapping(target = "id", ignore = true)
+  @Mapping(target = "maison", ignore = true)
+  @Mapping(target = "surfaceMetresCarres", ignore = true)
   Appartement toAppartement(AppartementRequestDTO dto);
 
   // Pour les mises à jour (PUT), pour ne pas écraser l'ID
