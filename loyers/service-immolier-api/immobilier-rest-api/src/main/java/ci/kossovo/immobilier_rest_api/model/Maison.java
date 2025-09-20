@@ -20,7 +20,7 @@ public class Maison {
   @Id private String id = UUID.randomUUID().toString();
 
   @Column(nullable = false, length = 10)
-  private String ILot;
+  private String ilot;
 
   @Column(nullable = false)
   private String adresse;

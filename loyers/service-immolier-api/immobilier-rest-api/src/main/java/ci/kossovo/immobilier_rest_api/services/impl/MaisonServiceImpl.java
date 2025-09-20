@@ -50,7 +50,7 @@ public class MaisonServiceImpl implements MaisonService {
     eventGateway.publish(
         new MaisonCreatedEvent(
             maison.getId(),
-            maison.getILot(),
+            maison.getIlot(),
             maison.getAdresse(),
             maison.getVille(),
             maison.getQuartier(),
@@ -91,7 +91,7 @@ public class MaisonServiceImpl implements MaisonService {
     eventGateway.publish(
         new MaisonCreatedEvent(
             updatedMaison.getId(),
-            updatedMaison.getILot(),
+            updatedMaison.getIlot(),
             updatedMaison.getAdresse(),
             updatedMaison.getVille(),
             updatedMaison.getQuartier(),
@@ -149,6 +149,4 @@ public class MaisonServiceImpl implements MaisonService {
     List<Appartement> appartements = appartementRepository.findByMaisonId(maisonId);
     return mapper.toAppartementsResponseDTOs(appartements);
   }
-
-  
 }
