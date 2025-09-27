@@ -1,7 +1,10 @@
 package ci.kossovo.immobilier_rest_api.model;
 
+import ci.kossovo.loyer_core_api.enums.immobiliers.TypeAppartement;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -20,18 +23,11 @@ public class Appartement {
   @Column(nullable = false)
   private String reference;
 
-  @Column(nullable = false)
-  private String description;
-
-  @Column(nullable = false)
-  private double surface;
+  @Enumerated(EnumType.STRING)
+  private TypeAppartement type;
 
   private int etage;
   private int nombreDePieces;
-  private double surfaceMetresCarres;
-
-  @Column(nullable = false)
-  private int nombreSallesBains;
 
   // Relation inverse: Plusieurs appartements appartiennent à une maison.
   // FetchType.LAZY est crucial pour ne pas charger la maison inutilement.

@@ -47,11 +47,11 @@ public class MaisonServiceImpl implements MaisonService {
     // 2. Persister l'entité
     maison = maisonRepository.save(maison);
     // 3. Publier l'événement de domaine
+
     eventGateway.publish(
         new MaisonCreatedEvent(
             maison.getId(),
-            maison.getIlot(),
-            maison.getAdresse(),
+            maison.getLot(),
             maison.getVille(),
             maison.getQuartier(),
             maison.getAnneeConstruction()));
@@ -87,15 +87,16 @@ public class MaisonServiceImpl implements MaisonService {
 
     mapper.updateMaisonFromDto(maisonDTO, maison);
     Maison updatedMaison = maisonRepository.save(maison);
+
     // On pourrait publier un événement MaisonMiseAJourEvenement si nécessaire
     eventGateway.publish(
         new MaisonCreatedEvent(
             updatedMaison.getId(),
-            updatedMaison.getIlot(),
-            updatedMaison.getAdresse(),
+            updatedMaison.getLot(),
             updatedMaison.getVille(),
             updatedMaison.getQuartier(),
             updatedMaison.getAnneeConstruction()));
+
     return mapper.toMaisonResponseDTO(updatedMaison);
   }
 
@@ -121,6 +122,7 @@ public class MaisonServiceImpl implements MaisonService {
     // Mapper le DTO en entité
     Appartement appartement = mapper.toAppartement(appartementDTO);
     maison.addAppartement(appartement);
+
     // Persister l'appartement (grâce au cascade, la maison est aussi persistée)
     // appartementRepository.save(appartement);
 
@@ -129,11 +131,7 @@ public class MaisonServiceImpl implements MaisonService {
 
     eventGateway.publish(
         new AppartementAddedToMaisonEvent(
-            appartement.getId(),
-            appartement.getReference(),
-            appartement.getDescription(),
-            appartement.getSurface(),
-            appartement.getMaison().getId()));
+            appartement.getId(), appartement.getReference(), appartement.getReference()));
 
     // Mapper l'entité sauvegardée en DTO de réponse
     return mapper.toAppResponseDTO(appartement);

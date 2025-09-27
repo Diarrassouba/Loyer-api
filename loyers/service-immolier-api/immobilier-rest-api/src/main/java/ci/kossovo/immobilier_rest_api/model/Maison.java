@@ -19,17 +19,14 @@ public class Maison {
 
   @Id private String id = UUID.randomUUID().toString();
 
-  @Column(nullable = false, length = 10)
-  private String ilot;
+  @Column(nullable = false, length = 50)
+  private String lot;
 
-  @Column(nullable = false)
-  private String adresse;
+  @Column(nullable = false, length = 50)
+  private String quartier;
 
   @Column(nullable = false)
   private String ville;
-
-  @Column(nullable = false, length = 10)
-  private String quartier;
 
   private int anneeConstruction;
 
