@@ -7,20 +7,20 @@ import ci.kossovo.immobilier_rest_api.dtos.MaisonResponseDTO;
 import ci.kossovo.immobilier_rest_api.model.Appartement;
 import ci.kossovo.immobilier_rest_api.model.Maison;
 import java.util.List;
+import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValueCheckStrategy;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
-@Mapper(componentModel = "spring")
+@Mapper(
+    componentModel = "spring",
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface ImmobilierMapper {
   // --- MAPPERS POUR MAISON ---
 
-<<<<<<< HEAD
-  // @Mapping(source = "id", target = "maisonId")
-  @Mapping(source = "id", target = "maisonId")
-=======
   @Mapping(source = "appartements", target = "appartements")
->>>>>>> 5dcc91dab149da2c08bdc96b0ad3e50ad5437c96
   MaisonResponseDTO toMaisonResponseDTO(Maison maison);
 
   // @Mapping(source = "id", target = "maisonId")
@@ -41,6 +41,7 @@ public interface ImmobilierMapper {
 >>>>>>> 5dcc91dab149da2c08bdc96b0ad3e50ad5437c96
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "appartements", ignore = true)
+  @BeanMapping(nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
   void updateMaisonFromDto(MaisonRequestDTO dto, @MappingTarget Maison maison);
 
   // --- MAPPERS POUR APPARTEMENT ---
@@ -56,7 +57,5 @@ public interface ImmobilierMapper {
   Appartement toAppartement(AppartementRequestDTO dto);
 
   // Pour les mises à jour (PUT), pour ne pas écraser l'ID
-  @Mapping(target = "id", ignore = true)
-  @Mapping(target = "maison", ignore = true)
   void updateAppartementFromDto(AppartementRequestDTO dto, @MappingTarget Appartement appartement);
 }
