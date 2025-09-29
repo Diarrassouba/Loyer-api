@@ -23,11 +23,8 @@ public class Appartement {
   @Column(nullable = false)
   private String reference;
 
-  @Column(nullable = false)
-  private String description;
-
-  @Column(nullable = false)
-  private double surface;
+  @Enumerated(EnumType.STRING)
+  private TypeAppartement type;
 
   private int etage;
   private int nombreDePieces;
