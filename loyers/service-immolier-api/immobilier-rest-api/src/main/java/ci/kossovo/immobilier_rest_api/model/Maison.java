@@ -10,11 +10,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
 @Getter
 @Setter
+@NoArgsConstructor
 public class Maison {
 
   @Id private String id = UUID.randomUUID().toString();
@@ -22,16 +24,16 @@ public class Maison {
   @Column(nullable = false, length = 10)
   private String ilot;
 
-  @Column(nullable = false)
-  private String adresse;
+  @Column(nullable = false, length = 10)
+  private String quartier;
 
   @Column(nullable = false)
   private String ville;
 
-  @Column(nullable = false, length = 10)
-  private String quartier;
-
+  @Column(nullable = false)
   private int anneeConstruction;
+
+  private String adresse;
 
   // Relation: Une maison a plusieurs appartements.
   // 'mappedBy="maison"' indique que l'entité Appartement gère la clé étrangère.

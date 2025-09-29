@@ -45,7 +45,7 @@ public class MaisonServiceImpl implements MaisonService {
     // 1. Mapper le DTO en entité
     Maison maison = mapper.toMaison(maisonDTO);
     // 2. Persister l'entité
-    maison = maisonRepository.save(maison);
+     maisonRepository.save(maison);
     // 3. Publier l'événement de domaine
     eventGateway.publish(
         new MaisonCreatedEvent(

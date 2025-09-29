@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record DepenseDTO(
-    String id,
+    String depenseId,
     BigDecimal montant,
     String description,
     LocalDate date,

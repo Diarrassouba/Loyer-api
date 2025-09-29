@@ -15,14 +15,21 @@ import org.mapstruct.MappingTarget;
 public interface ImmobilierMapper {
   // --- MAPPERS POUR MAISON ---
 
+  // @Mapping(source = "id", target = "maisonId")
+  @Mapping(source = "id", target = "maisonId")
   MaisonResponseDTO toMaisonResponseDTO(Maison maison);
 
+  // @Mapping(source = "id", target = "maisonId")
   List<MaisonResponseDTO> toMaisonResponseDTOs(List<Maison> maisons);
 
+  // @Mapping(target = "id", ignore = true)
+  @Mapping(target = "id", ignore = true)
+  @Mapping(target = "appartements", ignore = true)
   Maison toMaison(MaisonRequestDTO dto);
 
   // Pour les mises à jour (PUT), pour ne pas écraser l'ID
-
+  @Mapping(target = "id", ignore = true)
+  @Mapping(target = "appartements", ignore = true)
   void updateMaisonFromDto(MaisonRequestDTO dto, @MappingTarget Maison maison);
 
   // --- MAPPERS POUR APPARTEMENT ---
@@ -34,9 +41,10 @@ public interface ImmobilierMapper {
 
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "maison", ignore = true)
-  @Mapping(target = "surfaceMetresCarres", ignore = true)
   Appartement toAppartement(AppartementRequestDTO dto);
 
   // Pour les mises à jour (PUT), pour ne pas écraser l'ID
+  @Mapping(target = "id", ignore = true)
+  @Mapping(target = "maison", ignore = true)
   void updateAppartementFromDto(AppartementRequestDTO dto, @MappingTarget Appartement appartement);
 }
