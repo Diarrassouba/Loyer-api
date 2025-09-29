@@ -1,7 +1,10 @@
 package ci.kossovo.immobilier_rest_api.model;
 
+import ci.kossovo.loyer_core_api.enums.immobiliers.TypeAppartement;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -20,8 +23,12 @@ public class Appartement {
   @Column(nullable = false)
   private String reference;
 
+  @Column(nullable = false)
   private String description;
+
+  @Column(nullable = false)
   private double surface;
+
   private int etage;
   private int nombreDePieces;
 

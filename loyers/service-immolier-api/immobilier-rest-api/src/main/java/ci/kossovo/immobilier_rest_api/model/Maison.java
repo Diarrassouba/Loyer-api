@@ -21,16 +21,23 @@ public class Maison {
 
   @Id private String id = UUID.randomUUID().toString();
 
-  @Column(nullable = false, length = 10)
-  private String ilot;
+  @Column(nullable = false, length = 50)
+  private String lot;
 
+<<<<<<< HEAD
   @Column(nullable = false, length = 10)
+=======
+  @Column(nullable = false, length = 50)
+>>>>>>> 5dcc91dab149da2c08bdc96b0ad3e50ad5437c96
   private String quartier;
 
   @Column(nullable = false)
   private String ville;
 
+<<<<<<< HEAD
   @Column(nullable = false)
+=======
+>>>>>>> 5dcc91dab149da2c08bdc96b0ad3e50ad5437c96
   private int anneeConstruction;
 
   private String adresse;
