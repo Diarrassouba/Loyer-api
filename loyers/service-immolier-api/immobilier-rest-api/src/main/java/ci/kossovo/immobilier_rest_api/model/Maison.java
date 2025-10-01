@@ -46,4 +46,9 @@ public class Maison {
     appartements.add(appartement);
     appartement.setMaison(this);
   }
+
+  public void removeAppartement(Appartement appartement) {
+    appartements.remove(appartement);
+    appartement.setMaison(null);
+  }
 }

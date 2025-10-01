@@ -25,4 +25,5 @@ public interface MaisonService {
       String maisonId, AppartementRequestDTO appartementDTO);
 
   List<AppartementResponseDTO> findAppartementsByMaisonId(String maisonId);
+  void removeAppartementFromMaison(String maisonId, String appartementId);
 }

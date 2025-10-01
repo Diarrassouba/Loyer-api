@@ -11,7 +11,10 @@ import ci.kossovo.immobilier_rest_api.repositories.AppartementRepository;
 import ci.kossovo.immobilier_rest_api.repositories.MaisonRepository;
 import ci.kossovo.immobilier_rest_api.services.MaisonService;
 import ci.kossovo.loyer_core_api.events.immobiliers.AppartementAddedToMaisonEvent;
+import ci.kossovo.loyer_core_api.events.immobiliers.AppartementDeletedToMaisonEvent;
 import ci.kossovo.loyer_core_api.events.immobiliers.MaisonCreatedEvent;
+import ci.kossovo.loyer_core_api.events.immobiliers.MaisonDeletedEvent;
+import ci.kossovo.loyer_core_api.events.immobiliers.MaisonUpdatedEvent;
 // Custom exception for Maison not found
 import ci.kossovo.loyer_core_api.exceptions.MaisonNotFoundException;
 import java.util.List;
@@ -90,7 +93,7 @@ public class MaisonServiceImpl implements MaisonService {
 
     // On pourrait publier un événement MaisonMiseAJourEvenement si nécessaire
     eventGateway.publish(
-        new MaisonCreatedEvent(
+        new MaisonUpdatedEvent(
             updatedMaison.getId(),
             updatedMaison.getLot(),
             updatedMaison.getVille(),
@@ -107,6 +110,7 @@ public class MaisonServiceImpl implements MaisonService {
     }
     maisonRepository.deleteById(id);
     // Publier un événement MaisonSupprimeeEvenement si nécessaire
+    eventGateway.publish(new MaisonDeletedEvent(id));
   }
 
   // --- Opérations sur les Appartements ---
@@ -146,5 +150,29 @@ public class MaisonServiceImpl implements MaisonService {
     // et les mapper en DTOs de réponse
     List<Appartement> appartements = appartementRepository.findByMaisonId(maisonId);
     return mapper.toAppartementsResponseDTOs(appartements);
+  }
+
+  @Override
+  public void removeAppartementFromMaison(String maisonId, String appartementId) {
+    Maison maison =
+        maisonRepository
+            .findById(maisonId)
+            .orElseThrow(
+                () -> new MaisonNotFoundException("Maison non trouvée avec l'ID: " + maisonId));
+
+    Appartement appartement =
+        appartementRepository
+            .findById(appartementId)
+            .orElseThrow(
+                () ->
+                    new RuntimeException(
+                        "Appartement non trouvé avec l'ID: "
+                            + appartementId)); // Exception générique
+    maison.removeAppartement(appartement);
+    // appartementRepository.delete(appartement);
+    maisonRepository.save(maison);
+
+    // Publier un événement AppartementRetireDeMaisonEvent si nécessaire
+    eventGateway.publish(new AppartementDeletedToMaisonEvent(appartement.getId(), maisonId));
   }
 }
