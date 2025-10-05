@@ -1,13 +1,13 @@
 package ci.kossovo.immobilier_rest_api;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 
 import ci.kossovo.immobilier_rest_api.dtos.MaisonRequestDTO;
 import ci.kossovo.immobilier_rest_api.dtos.MaisonResponseDTO;
@@ -17,23 +17,30 @@ import ci.kossovo.immobilier_rest_api.repositories.AppartementRepository;
 import ci.kossovo.immobilier_rest_api.repositories.MaisonRepository;
 import ci.kossovo.immobilier_rest_api.services.impl.MaisonServiceImpl;
 import ci.kossovo.loyer_core_api.events.immobiliers.MaisonCreatedEvent;
-import jakarta.persistence.EntityNotFoundException;
-
+import ci.kossovo.loyer_core_api.events.immobiliers.MaisonDeletedEvent;
+import ci.kossovo.loyer_core_api.events.immobiliers.MaisonUpdatedEvent;
+import ci.kossovo.loyer_core_api.exceptions.MaisonNotFoundException;
+import java.util.Optional;
 import org.axonframework.eventhandling.gateway.EventGateway;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 public class MaisonServiceImplTest {
-  @Mock private MaisonRepository maisonRepository;
-  @Mock private ImmobilierMapper mapper;
-  @Mock private AppartementRepository appartementRepository;
-  @Mock private EventGateway eventGateway;
-  @InjectMocks private MaisonServiceImpl maisonService;
+  @Mock
+  private MaisonRepository maisonRepository;
+  @Mock
+  private ImmobilierMapper mapper;
+  @Mock
+  private AppartementRepository appartementRepository;
+  @Mock
+  private EventGateway eventGateway;
+  @InjectMocks
+  private MaisonServiceImpl maisonService;
 
   // Ajoutez ici vos méthodes de test
 
@@ -46,16 +53,18 @@ public class MaisonServiceImplTest {
     // 4. Vérifiez que les interactions avec les dépendances sont correctes
 
     // ARRANGE (Préparation)
-    MaisonRequestDTO requestDTO =
-        new MaisonRequestDTO("123 ilot de Test", "Testville", "Abidjan", 2023);
+    MaisonRequestDTO requestDTO = new MaisonRequestDTO("123 ilot de Test", "123 ilot de Test", "Abidjan", 2023);
 
-    Maison maisonToSave = new Maison(); // L'objet que le mapper est censé créer
+    Maison maisonToSave = new Maison();
+    maisonToSave.setLot("123 ilot de Test");
+    maisonToSave.setVille("123 ilot de Test");
+    maisonToSave.setAnneeConstruction(2023);
     Maison savedMaison = new Maison(); // L'objet que le repo est censé retourner
     savedMaison.setId("maison-uuid-123");
-    savedMaison.setQuartier("123 ilot de Test");
-    MaisonResponseDTO expectedResponse =
-        new MaisonResponseDTO(
-            "maison-uuid-123", "123 ilot de Test", "Testville", "Abidjan", 2023, null);
+    savedMaison.setLot("123 ilot de Test");
+    savedMaison.setQuartier("Yopougon");
+    MaisonResponseDTO expectedResponse = new MaisonResponseDTO("maison-uuid-123", "123 ilot de Test", "Yopougon",
+        "Abidjan", 2023, null);
 
     // Définir le comportement des mocks
     when(mapper.toMaison(requestDTO)).thenReturn(maisonToSave);
@@ -68,54 +77,115 @@ public class MaisonServiceImplTest {
     // ASSERT (Vérification)
     assertThat(actualResponse).isNotNull();
     assertThat(actualResponse.id()).isEqualTo("maison-uuid-123");
-    assertThat(actualResponse.quartier()).isEqualTo("123 ilot de Test");
+    assertThat(actualResponse.lot()).isEqualTo("123 ilot de Test");
 
     // Vérifier que les méthodes des mocks ont été appelées
     verify(maisonRepository, times(1)).save(maisonToSave);
     verify(eventGateway, times(1)).publish(any(MaisonCreatedEvent.class));
   }
 
-
   @Test
-  void createMaison_shouldNotSaveAndPublishEvent_whenGivenInvalidDTO() {
-    // Implémentez votre test ici
-    // 1. Créez un DTO invalide
-    // 2. Simulez le comportement des dépendances
-    // 3. Appelez la méthode à tester
-    // 4. Vérifiez que les interactions avec les dépendances sont correctes
+  void findMaisonById_shouldThrowException_whenMaisonNotFound() {
+    // ARRANGE
+    String nonExistentId = "id-qui-n-existe-pas";
+    when(maisonRepository.findById(nonExistentId)).thenReturn(Optional.empty());
 
-    // ARRANGE (Préparation)
-    MaisonRequestDTO requestDTO =
-        new MaisonRequestDTO("", "Testville", "Abidjan", 2023);
+    // ACT & ASSERT
+    assertThatThrownBy(() -> maisonService.findMaisonById(nonExistentId)).isInstanceOf(MaisonNotFoundException.class)
+        .hasMessageContaining("Maison non trouvée avec l'ID: " + nonExistentId);
 
-    // Définir le comportement des mocks
-    when(mapper.toMaison(requestDTO)).thenReturn(null);
-
-    // ACT (Action)
-    MaisonResponseDTO actualResponse = maisonService.createMaison(requestDTO);
-
-    // ASSERT (Vérification)
-    assertThat(actualResponse).isNull();
-
-    // Vérifier que les méthodes des mocks ont été appelées
-    verify(maisonRepository, times(0)).save(any(Maison.class));
-    verify(eventGateway, times(0)).publish(any(MaisonCreatedEvent.class));
+    // Vérifier qu'aucune autre interaction n'a eu lieu
+    verifyNoInteractions(mapper, eventGateway);
   }
 
+  @Test
+  void updateMaison_shouldUpdateAndPublishEvent_whenMaisonExists() {
+    // ARRANGE
+    String maisonId = "maison-existant-id";
+    MaisonRequestDTO requestDTO = new MaisonRequestDTO("Nouveau lot", "Yopougon", "Nouvelleville", 2024);
+
+    Maison maisonExistante = new Maison();
+    maisonExistante.setId(maisonId);
+    maisonExistante.setLot("Nouveau lot");
+
+    Maison maisonMiseAJour = new Maison();
+    maisonMiseAJour.setId(maisonId);
+    maisonMiseAJour.setLot("Nouveau lot");
+
+    MaisonResponseDTO expectedResponse = new MaisonResponseDTO(maisonId, "Nouveau lot", "Yopougon", "Nouvelleville",
+        2024, null);
+
+    // Définir le comportement des mocks
+    when(maisonRepository.findById(maisonId)).thenReturn(Optional.of(maisonExistante));
+    when(maisonRepository.save(any(Maison.class))).thenReturn(maisonMiseAJour); // On peut être plus précis si besoin
+    when(mapper.toMaisonResponseDTO(maisonMiseAJour)).thenReturn(expectedResponse);
+
+    // ACT
+    MaisonResponseDTO actualResponse = maisonService.updateMaison(maisonId, requestDTO);
+
+    // ASSERT
+    assertThat(actualResponse).isEqualTo(expectedResponse);
+
+    // Vérifier que la méthode de mise à jour du mapper a été appelée sur la bonne
+    // entité
+    verify(mapper, times(1)).updateMaisonFromDto(requestDTO, maisonExistante);
+    verify(maisonRepository, times(1)).save(maisonExistante);
+
+    // Vérifier que l'événement de mise à jour a été publié
+    verify(eventGateway, times(1)).publish(any(MaisonUpdatedEvent.class));
+  }
 
   @Test
-    void findMaisonById_shouldThrowException_whenMaisonNotFound() {
-        // ARRANGE
-        String nonExistentId = "id-qui-n-existe-pas";
-        when(maisonRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+  void updateMaison_shouldThrowException_whenMaisonNotFound() {
+    // ARRANGE
+    String nonExistentId = "id-qui-n-existe-pas";
+    MaisonRequestDTO requestDTO = new MaisonRequestDTO("Nouveau lot", "Yopougon", "Nouvelleville", 2024);
+    when(maisonRepository.findById(nonExistentId)).thenReturn(Optional.empty());
 
-        // ACT & ASSERT
-        assertThatThrownBy(() -> maisonService.findMaisonById(nonExistentId))
-            .isInstanceOf(EntityNotFoundException.class)
-            .hasMessageContaining("Maison non trouvée avec l'ID: " + nonExistentId);
-            
-        // Vérifier qu'aucune autre interaction n'a eu lieu
-        verifyNoInteractions(mapper, eventGateway);
-    }
+    // ACT & ASSERT
+    assertThatThrownBy(() -> maisonService.updateMaison(nonExistentId, requestDTO))
+        .isInstanceOf(MaisonNotFoundException.class);
 
+    // Vérifier qu'aucune autre interaction n'a eu lieu
+    verify(maisonRepository, never()).save(any());
+    verifyNoInteractions(eventGateway);
+  }
+
+  @Test
+  void deleteMaison_shouldDeleteAndPublishEvent_whenMaisonExists() {
+    // ARRANGE
+    String maisonId = "maison-a-supprimer-id";
+    when(maisonRepository.existsById(maisonId)).thenReturn(true);
+
+    // Créer un "ArgumentCaptor" pour capturer l'événement qui sera publié
+    ArgumentCaptor<MaisonDeletedEvent> eventCaptor = ArgumentCaptor.forClass(MaisonDeletedEvent.class);
+
+    // ACT
+    maisonService.deleteMaison(maisonId);
+
+    // ASSERT
+    // Vérifier que la méthode delete a été appelée avec le bon ID
+    verify(maisonRepository, times(1)).deleteById(maisonId);
+
+    // Vérifier que l'événement a été publié et capturer sa valeur
+    verify(eventGateway, times(1)).publish(eventCaptor.capture());
+
+    // Vérifier que l'ID de la maison dans l'événement capturé est correct
+    MaisonDeletedEvent publishedEvent = eventCaptor.getValue();
+    assertThat(publishedEvent.maisonId()).isEqualTo(maisonId);
+  }
+
+  @Test
+  void deleteMaison_shouldThrowException_whenMaisonNotFound() {
+    // ARRANGE
+    String nonExistentId = "id-qui-n-existe-pas";
+    when(maisonRepository.existsById(nonExistentId)).thenReturn(false);
+
+    // ACT & ASSERT
+    assertThatThrownBy(() -> maisonService.deleteMaison(nonExistentId)).isInstanceOf(MaisonNotFoundException.class);
+
+    // Vérifier qu'aucune suppression ou publication n'a eu lieu
+    verify(maisonRepository, never()).deleteById(any());
+    verifyNoInteractions(eventGateway);
+  }
 }
