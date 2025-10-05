@@ -12,6 +12,7 @@ import ci.kossovo.immobilier_rest_api.repositories.MaisonRepository;
 import ci.kossovo.immobilier_rest_api.services.MaisonService;
 import ci.kossovo.loyer_core_api.events.immobiliers.AppartementAddedToMaisonEvent;
 import ci.kossovo.loyer_core_api.events.immobiliers.AppartementDeletedToMaisonEvent;
+import ci.kossovo.loyer_core_api.events.immobiliers.AppartementUpdatedEvent;
 import ci.kossovo.loyer_core_api.events.immobiliers.MaisonCreatedEvent;
 import ci.kossovo.loyer_core_api.events.immobiliers.MaisonDeletedEvent;
 import ci.kossovo.loyer_core_api.events.immobiliers.MaisonUpdatedEvent;
@@ -174,5 +175,72 @@ public class MaisonServiceImpl implements MaisonService {
 
     // Publier un événement AppartementRetireDeMaisonEvent si nécessaire
     eventGateway.publish(new AppartementDeletedToMaisonEvent(appartement.getId(), maisonId));
+  }
+
+  @Override
+  public AppartementResponseDTO updateAppartement(
+      String maisonId, String appartementId, AppartementRequestDTO appartementDTO) {
+    Maison maison =
+        maisonRepository
+            .findById(maisonId)
+            .orElseThrow(
+                () -> new MaisonNotFoundException("Maison non trouvée avec l'ID: " + maisonId));
+    Appartement appartement =
+        appartementRepository
+            .findById(appartementId)
+            .orElseThrow(
+                () ->
+                    new RuntimeException(
+                        "Appartement non trouvé avec l'ID: "
+                            + appartementId)); // Exception générique
+
+    // Mapper le DTO en entité
+    mapper.updateAppartementFromDto(appartementDTO, appartement);
+    appartement.setMaison(maison);
+
+    // Persister l'appartement
+    appartementRepository.save(appartement);
+
+    // Publier un événement AppartementMiseAJourEvenement si nécessaire
+    eventGateway.publish(
+        new AppartementUpdatedEvent(
+            appartement.getId(),
+            appartement.getReference(),
+            maisonId,
+            appartementId,
+            appartement.getNombreDePieces()));
+
+    // Mapper l'entité sauvegardée en DTO de réponse
+    return mapper.toAppResponseDTO(appartement);
+  }
+  @Override
+  @Transactional(readOnly = true) // Optimisation pour les lectures 
+  public AppartementResponseDTO findAppartementById(String maisonId, String appartementId) {
+    if (!maisonRepository.existsById(maisonId)) {
+      throw new MaisonNotFoundException("Maison non trouvée avec l'ID: " + maisonId);
+    }
+    Appartement appartement =
+        appartementRepository
+            .findById(appartementId)
+            .orElseThrow(
+                () ->
+                    new RuntimeException(
+                        "Appartement non trouvé avec l'ID: "
+                            + appartementId)); // Exception générique
+
+    return mapper.toAppResponseDTO(appartement);
+  }
+
+  @Override
+  public void deleteAppartement(String maisonId, String id) {
+    if (!maisonRepository.existsById(maisonId)) {
+      throw new MaisonNotFoundException("Maison non trouvée avec l'ID: " + maisonId);
+    }
+    if (!appartementRepository.existsById(id)) {
+      throw new RuntimeException("Appartement non trouvé avec l'ID: " + id);
+    }
+    appartementRepository.deleteById(id);
+    // Publier un événement AppartementSupprimeeEvenement si nécessaire
+    eventGateway.publish(new AppartementDeletedToMaisonEvent(id, maisonId));
   }
 }

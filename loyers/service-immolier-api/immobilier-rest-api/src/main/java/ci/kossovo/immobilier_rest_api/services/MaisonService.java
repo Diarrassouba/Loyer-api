@@ -26,4 +26,9 @@ public interface MaisonService {
 
   List<AppartementResponseDTO> findAppartementsByMaisonId(String maisonId);
   void removeAppartementFromMaison(String maisonId, String appartementId);
+  AppartementResponseDTO updateAppartement(String maisonId, String appartementId, AppartementRequestDTO appartementDTO);
+
+  AppartementResponseDTO findAppartementById(String maisonId, String appartementId);
+
+  void deleteAppartement(String maisonId, String id);
 }
