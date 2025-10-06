@@ -32,11 +32,8 @@ public class MaisonServiceImpl implements MaisonService {
   private final ImmobilierMapper mapper;
   private final EventGateway eventGateway;
 
-  public MaisonServiceImpl(
-      MaisonRepository maisonRepository,
-      AppartementRepository appartementRepository,
-      ImmobilierMapper mapper,
-      EventGateway eventGateway) {
+  public MaisonServiceImpl(MaisonRepository maisonRepository, AppartementRepository appartementRepository,
+      ImmobilierMapper mapper, EventGateway eventGateway) {
     this.maisonRepository = maisonRepository;
     this.appartementRepository = appartementRepository;
     this.mapper = mapper;
@@ -52,13 +49,8 @@ public class MaisonServiceImpl implements MaisonService {
     maison = maisonRepository.save(maison);
     // 3. Publier l'événement de domaine
 
-    eventGateway.publish(
-        new MaisonCreatedEvent(
-            maison.getId(),
-            maison.getLot(),
-            maison.getVille(),
-            maison.getQuartier(),
-            maison.getAnneeConstruction()));
+    eventGateway.publish(new MaisonCreatedEvent(maison.getId(), maison.getLot(), maison.getVille(),
+        maison.getQuartier(), maison.getAnneeConstruction()));
 
     // 4. Mapper l'entité sauvegardée en DTO de réponse
     return mapper.toMaisonResponseDTO(maison);
@@ -74,32 +66,23 @@ public class MaisonServiceImpl implements MaisonService {
   @Override
   @Transactional(readOnly = true) // Optimisation pour les lectures
   public MaisonResponseDTO findMaisonById(String id) {
-    Maison maison =
-        maisonRepository
-            .findById(id)
-            .orElseThrow(() -> new MaisonNotFoundException("Maison non trouvée avec l'ID: " + id));
+    Maison maison = maisonRepository.findById(id)
+        .orElseThrow(() -> new MaisonNotFoundException("Maison non trouvée avec l'ID: " + id));
 
     return mapper.toMaisonResponseDTO(maison);
   }
 
   @Override
   public MaisonResponseDTO updateMaison(String id, MaisonRequestDTO maisonDTO) {
-    Maison maison =
-        maisonRepository
-            .findById(id)
-            .orElseThrow(() -> new MaisonNotFoundException("Maison non trouvée avec l'ID: " + id));
+    Maison maison = maisonRepository.findById(id)
+        .orElseThrow(() -> new MaisonNotFoundException("Maison non trouvée avec l'ID: " + id));
 
     mapper.updateMaisonFromDto(maisonDTO, maison);
     Maison updatedMaison = maisonRepository.save(maison);
 
     // On pourrait publier un événement MaisonMiseAJourEvenement si nécessaire
-    eventGateway.publish(
-        new MaisonUpdatedEvent(
-            updatedMaison.getId(),
-            updatedMaison.getLot(),
-            updatedMaison.getVille(),
-            updatedMaison.getQuartier(),
-            updatedMaison.getAnneeConstruction()));
+    eventGateway.publish(new MaisonUpdatedEvent(updatedMaison.getId(), updatedMaison.getLot(), updatedMaison.getVille(),
+        updatedMaison.getQuartier(), updatedMaison.getAnneeConstruction()));
 
     return mapper.toMaisonResponseDTO(updatedMaison);
   }
@@ -116,13 +99,9 @@ public class MaisonServiceImpl implements MaisonService {
 
   // --- Opérations sur les Appartements ---
   @Override
-  public AppartementResponseDTO addAppartementToMaison(
-      String maisonId, AppartementRequestDTO appartementDTO) {
-    Maison maison =
-        maisonRepository
-            .findById(maisonId)
-            .orElseThrow(
-                () -> new MaisonNotFoundException("Maison non trouvée avec l'ID: " + maisonId));
+  public AppartementResponseDTO addAppartementToMaison(String maisonId, AppartementRequestDTO appartementDTO) {
+    Maison maison = maisonRepository.findById(maisonId)
+        .orElseThrow(() -> new MaisonNotFoundException("Maison non trouvée avec l'ID: " + maisonId));
 
     // Mapper le DTO en entité
     Appartement appartement = mapper.toAppartement(appartementDTO);
@@ -135,8 +114,7 @@ public class MaisonServiceImpl implements MaisonService {
     maisonRepository.save(maison);
 
     eventGateway.publish(
-        new AppartementAddedToMaisonEvent(
-            appartement.getId(), appartement.getReference(), appartement.getReference()));
+        new AppartementAddedToMaisonEvent(appartement.getId(), appartement.getReference(), appartement.getReference()));
 
     // Mapper l'entité sauvegardée en DTO de réponse
     return mapper.toAppResponseDTO(appartement);
@@ -155,20 +133,12 @@ public class MaisonServiceImpl implements MaisonService {
 
   @Override
   public void removeAppartementFromMaison(String maisonId, String appartementId) {
-    Maison maison =
-        maisonRepository
-            .findById(maisonId)
-            .orElseThrow(
-                () -> new MaisonNotFoundException("Maison non trouvée avec l'ID: " + maisonId));
+    Maison maison = maisonRepository.findById(maisonId)
+        .orElseThrow(() -> new MaisonNotFoundException("Maison non trouvée avec l'ID: " + maisonId));
 
-    Appartement appartement =
-        appartementRepository
-            .findById(appartementId)
-            .orElseThrow(
-                () ->
-                    new RuntimeException(
-                        "Appartement non trouvé avec l'ID: "
-                            + appartementId)); // Exception générique
+    Appartement appartement = appartementRepository.findById(appartementId)
+        .orElseThrow(() -> new RuntimeException("Appartement non trouvé avec l'ID: " + appartementId)); // Exception
+                                                                                                        // générique
     maison.removeAppartement(appartement);
     // appartementRepository.delete(appartement);
     maisonRepository.save(maison);
@@ -178,21 +148,13 @@ public class MaisonServiceImpl implements MaisonService {
   }
 
   @Override
-  public AppartementResponseDTO updateAppartement(
-      String maisonId, String appartementId, AppartementRequestDTO appartementDTO) {
-    Maison maison =
-        maisonRepository
-            .findById(maisonId)
-            .orElseThrow(
-                () -> new MaisonNotFoundException("Maison non trouvée avec l'ID: " + maisonId));
-    Appartement appartement =
-        appartementRepository
-            .findById(appartementId)
-            .orElseThrow(
-                () ->
-                    new RuntimeException(
-                        "Appartement non trouvé avec l'ID: "
-                            + appartementId)); // Exception générique
+  public AppartementResponseDTO updateAppartement(String maisonId, String appartementId,
+      AppartementRequestDTO appartementDTO) {
+    Maison maison = maisonRepository.findById(maisonId)
+        .orElseThrow(() -> new MaisonNotFoundException("Maison non trouvée avec l'ID: " + maisonId));
+    Appartement appartement = appartementRepository.findById(appartementId)
+        .orElseThrow(() -> new RuntimeException("Appartement non trouvé avec l'ID: " + appartementId)); // Exception
+                                                                                                        // générique
 
     // Mapper le DTO en entité
     mapper.updateAppartementFromDto(appartementDTO, appartement);
@@ -202,31 +164,22 @@ public class MaisonServiceImpl implements MaisonService {
     appartementRepository.save(appartement);
 
     // Publier un événement AppartementMiseAJourEvenement si nécessaire
-    eventGateway.publish(
-        new AppartementUpdatedEvent(
-            appartement.getId(),
-            appartement.getReference(),
-            maisonId,
-            appartementId,
-            appartement.getNombreDePieces()));
+    eventGateway.publish(new AppartementUpdatedEvent(appartement.getId(), appartement.getReference(), maisonId,
+        appartementId, appartement.getNombreDePieces()));
 
     // Mapper l'entité sauvegardée en DTO de réponse
     return mapper.toAppResponseDTO(appartement);
   }
+
   @Override
-  @Transactional(readOnly = true) // Optimisation pour les lectures 
+  @Transactional(readOnly = true) // Optimisation pour les lectures
   public AppartementResponseDTO findAppartementById(String maisonId, String appartementId) {
     if (!maisonRepository.existsById(maisonId)) {
       throw new MaisonNotFoundException("Maison non trouvée avec l'ID: " + maisonId);
     }
-    Appartement appartement =
-        appartementRepository
-            .findById(appartementId)
-            .orElseThrow(
-                () ->
-                    new RuntimeException(
-                        "Appartement non trouvé avec l'ID: "
-                            + appartementId)); // Exception générique
+    Appartement appartement = appartementRepository.findById(appartementId)
+        .orElseThrow(() -> new RuntimeException("Appartement non trouvé avec l'ID: " + appartementId)); // Exception
+                                                                                                        // générique
 
     return mapper.toAppResponseDTO(appartement);
   }
