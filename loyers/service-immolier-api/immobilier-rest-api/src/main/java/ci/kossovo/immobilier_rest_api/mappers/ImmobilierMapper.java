@@ -4,7 +4,10 @@ import ci.kossovo.immobilier_rest_api.dtos.AppartementRequestDTO;
 import ci.kossovo.immobilier_rest_api.dtos.AppartementResponseDTO;
 import ci.kossovo.immobilier_rest_api.dtos.MaisonRequestDTO;
 import ci.kossovo.immobilier_rest_api.dtos.MaisonResponseDTO;
+import ci.kossovo.immobilier_rest_api.dtos.depenses.DepenseRequestDTO;
+import ci.kossovo.immobilier_rest_api.dtos.depenses.DepenseResponseDTO;
 import ci.kossovo.immobilier_rest_api.model.Appartement;
+import ci.kossovo.immobilier_rest_api.model.Depense;
 import ci.kossovo.immobilier_rest_api.model.Maison;
 import java.util.List;
 import org.mapstruct.BeanMapping;
@@ -14,9 +17,7 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValueCheckStrategy;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 
-@Mapper(
-    componentModel = "spring",
-    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+@Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface ImmobilierMapper {
   // --- MAPPERS POUR MAISON ---
 
@@ -53,4 +54,12 @@ public interface ImmobilierMapper {
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "maison", ignore = true)
   void updateAppartementFromDto(AppartementRequestDTO dto, @MappingTarget Appartement appartement);
+
+  // --- MAPPERS POUR DEPENSE ---
+  @Mapping(target = "id", ignore = true)
+  Depense toDepense(DepenseRequestDTO dto);
+
+  DepenseResponseDTO toDepenseResponseDTO(Depense depense);
+
+  List<DepenseResponseDTO> toDepenseResponseDTOList(List<Depense> depenses);
 }

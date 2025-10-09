@@ -4,15 +4,22 @@ import ci.kossovo.immobilier_rest_api.dtos.AppartementRequestDTO;
 import ci.kossovo.immobilier_rest_api.dtos.AppartementResponseDTO;
 import ci.kossovo.immobilier_rest_api.dtos.MaisonRequestDTO;
 import ci.kossovo.immobilier_rest_api.dtos.MaisonResponseDTO;
+import ci.kossovo.immobilier_rest_api.dtos.depenses.DepenseRequestDTO;
+import ci.kossovo.immobilier_rest_api.dtos.depenses.DepenseResponseDTO;
 import ci.kossovo.immobilier_rest_api.mappers.ImmobilierMapper;
 import ci.kossovo.immobilier_rest_api.model.Appartement;
+import ci.kossovo.immobilier_rest_api.model.Depense;
 import ci.kossovo.immobilier_rest_api.model.Maison;
 import ci.kossovo.immobilier_rest_api.repositories.AppartementRepository;
+import ci.kossovo.immobilier_rest_api.repositories.DepenseRepository;
 import ci.kossovo.immobilier_rest_api.repositories.MaisonRepository;
 import ci.kossovo.immobilier_rest_api.services.MaisonService;
+import ci.kossovo.loyer_core_api.events.DepenseDeletedEvent;
 import ci.kossovo.loyer_core_api.events.immobiliers.AppartementAddedToMaisonEvent;
 import ci.kossovo.loyer_core_api.events.immobiliers.AppartementDeletedToMaisonEvent;
 import ci.kossovo.loyer_core_api.events.immobiliers.AppartementUpdatedEvent;
+import ci.kossovo.loyer_core_api.events.immobiliers.DepenseRecordedEvent;
+import ci.kossovo.loyer_core_api.events.immobiliers.DepenseUpdatedEvent;
 import ci.kossovo.loyer_core_api.events.immobiliers.MaisonCreatedEvent;
 import ci.kossovo.loyer_core_api.events.immobiliers.MaisonDeletedEvent;
 import ci.kossovo.loyer_core_api.events.immobiliers.MaisonUpdatedEvent;
@@ -29,13 +36,15 @@ public class MaisonServiceImpl implements MaisonService {
 
   private final MaisonRepository maisonRepository;
   private final AppartementRepository appartementRepository;
+  private final DepenseRepository depenseRepository;
   private final ImmobilierMapper mapper;
   private final EventGateway eventGateway;
 
   public MaisonServiceImpl(MaisonRepository maisonRepository, AppartementRepository appartementRepository,
-      ImmobilierMapper mapper, EventGateway eventGateway) {
+      DepenseRepository depenseRepository, ImmobilierMapper mapper, EventGateway eventGateway) {
     this.maisonRepository = maisonRepository;
     this.appartementRepository = appartementRepository;
+    this.depenseRepository = depenseRepository;
     this.mapper = mapper;
     this.eventGateway = eventGateway;
   }
@@ -196,4 +205,97 @@ public class MaisonServiceImpl implements MaisonService {
     // Publier un événement AppartementSupprimeeEvenement si nécessaire
     eventGateway.publish(new AppartementDeletedToMaisonEvent(id, maisonId));
   }
+
+  @Override
+  public DepenseResponseDTO createDepense(DepenseRequestDTO depenseDTO) {
+    // 1. Validation métier : une dépense doit être liée à un seul bien.
+    validateDepenseAssociation(depenseDTO);
+
+    // 2. Mapper et sauvegarder
+    Depense depense = mapper.toDepense(depenseDTO);
+    Depense savedDepense = depenseRepository.save(depense);
+
+    // 3. Publier l'événement
+    String bienId = savedDepense.getMaisonId() != null ? savedDepense.getMaisonId() : savedDepense.getAppartementId();
+    String typeBien = savedDepense.getMaisonId() != null ? "MAISON" : "APPARTEMENT";
+
+    eventGateway.publish(new DepenseRecordedEvent(savedDepense.getId(), bienId, typeBien, savedDepense.getMontant(),
+        savedDepense.getDescription(), savedDepense.getDate()));
+
+    return mapper.toDepenseResponseDTO(savedDepense);
+  }
+
+  @Override
+  @Transactional(readOnly = true) // Optimisation pour les lectures
+  public List<DepenseResponseDTO> findDepensesByMaisonId(String maisonId) {
+    if (!maisonRepository.existsById(maisonId)) {
+      throw new MaisonNotFoundException("Maison non trouvée avec l'ID: " + maisonId);
+    }
+    return mapper.toDepenseResponseDTOList(depenseRepository.findByMaisonId(maisonId));
+  }
+
+  @Override
+  public List<DepenseResponseDTO> findDepensesByAppartementId(String appartementId) {
+    if (!appartementRepository.existsById(appartementId)) {
+      throw new MaisonNotFoundException("Appartement non trouvé avec l'ID: " + appartementId);
+    }
+    return mapper.toDepenseResponseDTOList(depenseRepository.findByAppartementId(appartementId));
+  }
+
+  @Override
+  public DepenseResponseDTO updateDepense(String depenseId, DepenseRequestDTO requestDTO) {
+    Depense depense = depenseRepository.findById(depenseId)
+        .orElseThrow(() -> new MaisonNotFoundException("Dépense non trouvée avec l'ID: " + depenseId));
+
+    // Validation de l'association
+    validateDepenseAssociation(requestDTO);
+
+    // Mettre à jour les champs
+    depense.setMontant(requestDTO.montant());
+    depense.setDescription(requestDTO.description());
+    depense.setDate(requestDTO.date());
+    depense.setMaisonId(requestDTO.maisonId());
+    depense.setAppartementId(requestDTO.appartementId());
+
+    Depense updatedDepense = depenseRepository.save(depense);
+
+    // Publier un événement de mise à jour si nécessaire
+    String bienId = updatedDepense.getMaisonId() != null ? updatedDepense.getMaisonId()
+        : updatedDepense.getAppartementId();
+    String typeBien = updatedDepense.getMaisonId() != null ? "MAISON" : "APPARTEMENT";
+
+    eventGateway.publish(new DepenseUpdatedEvent(updatedDepense.getId(), bienId, typeBien, updatedDepense.getMontant(),
+        updatedDepense.getDescription(), updatedDepense.getDate()));
+
+    return mapper.toDepenseResponseDTO(updatedDepense);
+  }
+
+  @Override
+  public void deleteDepense(String depenseId) {
+    if (!depenseRepository.existsById(depenseId)) {
+      throw new MaisonNotFoundException("Dépense non trouvée avec l'ID: " + depenseId);
+    }
+    depenseRepository.deleteById(depenseId);
+    // Publier un événement de suppression si nécessaire
+    eventGateway.publish(new DepenseDeletedEvent(depenseId));
+  }
+
+  // Méthode utilitaire pour valider l'association d'une dépense
+  private void validateDepenseAssociation(DepenseRequestDTO dto) {
+    if (dto.maisonId() != null && dto.appartementId() != null) {
+      throw new IllegalArgumentException(
+          "Une dépense ne peut pas être associée à la fois à une maison et un appartement.");
+    }
+    if (dto.maisonId() == null && dto.appartementId() == null) {
+      throw new IllegalArgumentException("Une dépense doit être associée à une maison ou un appartement.");
+    }
+    // Vérifier que le bien existe
+    if (dto.maisonId() != null && !maisonRepository.existsById(dto.maisonId())) {
+      throw new MaisonNotFoundException("Maison non trouvée avec l'ID: " + dto.maisonId());
+    }
+    if (dto.appartementId() != null && !appartementRepository.existsById(dto.appartementId())) {
+      throw new MaisonNotFoundException("Appartement non trouvé avec l'ID: " + dto.appartementId());
+    }
+  }
+
 }

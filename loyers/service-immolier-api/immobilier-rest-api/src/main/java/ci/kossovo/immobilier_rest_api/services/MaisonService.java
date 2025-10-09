@@ -4,6 +4,10 @@ import ci.kossovo.immobilier_rest_api.dtos.AppartementRequestDTO;
 import ci.kossovo.immobilier_rest_api.dtos.AppartementResponseDTO;
 import ci.kossovo.immobilier_rest_api.dtos.MaisonRequestDTO;
 import ci.kossovo.immobilier_rest_api.dtos.MaisonResponseDTO;
+import ci.kossovo.immobilier_rest_api.dtos.depenses.DepenseRequestDTO;
+import ci.kossovo.immobilier_rest_api.dtos.depenses.DepenseResponseDTO;
+import jakarta.validation.Valid;
+
 import java.util.List;
 
 public interface MaisonService {
@@ -21,14 +25,26 @@ public interface MaisonService {
   void deleteMaison(String id);
 
   // --- Opérations sur les Appartements ---
-  AppartementResponseDTO addAppartementToMaison(
-      String maisonId, AppartementRequestDTO appartementDTO);
+  AppartementResponseDTO addAppartementToMaison(String maisonId, AppartementRequestDTO appartementDTO);
 
   List<AppartementResponseDTO> findAppartementsByMaisonId(String maisonId);
+
   void removeAppartementFromMaison(String maisonId, String appartementId);
+
   AppartementResponseDTO updateAppartement(String maisonId, String appartementId, AppartementRequestDTO appartementDTO);
 
   AppartementResponseDTO findAppartementById(String maisonId, String appartementId);
 
   void deleteAppartement(String maisonId, String id);
+
+  // --- Opérations sur les Dépenses ---
+  DepenseResponseDTO createDepense(DepenseRequestDTO depenseDTO);
+
+  List<DepenseResponseDTO> findDepensesByMaisonId(String maisonId);
+
+  List<DepenseResponseDTO> findDepensesByAppartementId(String appartementId);
+
+  DepenseResponseDTO updateDepense(String depenseId, DepenseRequestDTO requestDTO);
+
+  void deleteDepense(String depenseId);
 }
