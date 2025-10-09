@@ -9,13 +9,21 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
 import ci.kossovo.immobilier_rest_api.dtos.AppartementRequestDTO;
 import ci.kossovo.immobilier_rest_api.dtos.MaisonRequestDTO;
+import ci.kossovo.immobilier_rest_api.dtos.depenses.DepenseRequestDTO;
+import ci.kossovo.immobilier_rest_api.model.Appartement;
+import ci.kossovo.immobilier_rest_api.model.Depense;
 import ci.kossovo.immobilier_rest_api.model.Maison;
 import ci.kossovo.immobilier_rest_api.repositories.AppartementRepository;
 import ci.kossovo.immobilier_rest_api.repositories.DepenseRepository;
 import ci.kossovo.immobilier_rest_api.repositories.MaisonRepository;
 import ci.kossovo.loyer_core_api.enums.immobiliers.TypeAppartement;
+import ci.kossovo.loyer_core_api.enums.immobiliers.TypeDepense;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import org.axonframework.eventhandling.gateway.EventGateway;
@@ -25,7 +33,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -294,5 +301,122 @@ public class MaisonControllerIntegrationTest {
     private void createAppartementApiCall(String maisonId, AppartementRequestDTO dto) throws Exception {
         mockMvc.perform(post("/api/maisons/{maisonId}/appartements", maisonId).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dto)));
+    }
+
+    // TESTS D'INTÉGRATION POUR DepenseController ---
+
+    @Test
+    @DisplayName("POST /api/depenses - Doit créer une dépense pour une maison et retourner 201 Created")
+    void createDepense_forMaison_shouldSucceed() throws Exception {
+        // Arrange
+        Maison maison = maisonRepository.save(createMaisonEntity("Avenue Montaigne", "Abidjan"));
+        DepenseRequestDTO requestDTO = new DepenseRequestDTO(new BigDecimal("1250.99"), "Reprise de la peinture",
+                LocalDate.now(), TypeDepense.REPARATION, maison.getId(), null);
+
+        // Act & Assert
+        mockMvc.perform(post("/api/depenses").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestDTO))).andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").isNotEmpty())
+                .andExpect(jsonPath("$.description", is("Reprise de la peinture")))
+                .andExpect(jsonPath("$.maisonId", is(maison.getId()))).andExpect(jsonPath("$.appartementId").isEmpty());
+
+        assertThat(depenseRepository.findAll()).hasSize(1);
+        verify(eventGateway).publish((Object) any());
+    }
+
+    @Test
+    @DisplayName("POST /api/depenses - Doit créer une dépense pour un appartement et retourner 201 Created")
+    void createDepense_forAppartement_shouldSucceed() throws Exception {
+        // Arrange
+        Maison maison = maisonRepository.save(createMaisonEntity("Sideci", "Abidjan"));
+        Appartement appartement = createAppartementEntity(maison, "3ème étage");
+        appartementRepository.save(appartement);
+
+        DepenseRequestDTO requestDTO = new DepenseRequestDTO(new BigDecimal("230000"), "Plomberie salle de bain",
+                LocalDate.now(), TypeDepense.REPARATION, null, appartement.getId());
+
+        // Act & Assert
+        mockMvc.perform(post("/api/depenses").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestDTO))).andExpect(status().isCreated())
+                .andExpect(jsonPath("$.description", is("Plomberie salle de bain")))
+                .andExpect(jsonPath("$.maisonId").isEmpty())
+                .andExpect(jsonPath("$.appartementId", is(appartement.getId())));
+    }
+
+    @Test
+    @DisplayName("POST /api/depenses - Doit retourner 400 Bad Request si liée à aucun bien")
+    void createDepense_shouldReturn400_whenNoAssociation() throws Exception {
+        // Arrange
+        DepenseRequestDTO requestDTO = new DepenseRequestDTO(BigDecimal.TEN, "Dépense orpheline", LocalDate.now(),
+                TypeDepense.DIVERS, null, null);
+
+        // Act & Assert
+        mockMvc.perform(post("/api/depenses").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestDTO))).andExpect(status().isBadRequest());
+    }
+
+
+     @Test
+    @DisplayName("POST /api/depenses - Doit retourner 404 Not Found si la maison n'existe pas")
+    void createDepense_shouldReturn404_whenMaisonNotFound() throws Exception {
+        // Arrange
+        DepenseRequestDTO requestDTO = new DepenseRequestDTO(
+            BigDecimal.TEN, "Test", LocalDate.now(), TypeDepense.DIVERS, "maison-inexistante-id", null
+        );
+
+        // Act & Assert
+        mockMvc.perform(post("/api/depenses")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestDTO)))
+            .andExpect(status().isNotFound());
+    }
+
+     @Test
+    @DisplayName("GET /api/maisons/{maisonId}/depenses - Doit retourner la liste des dépenses pour une maison")
+    void getDepensesByMaison_shouldReturnDepenseList() throws Exception {
+        // Arrange
+        Maison maison1 = maisonRepository.save(createMaisonEntity("Maison 1", "Ville A"));
+        Maison maison2 = maisonRepository.save(createMaisonEntity("Maison 2", "Ville B"));
+
+        depenseRepository.save(createDepenseEntity(maison1, null, "Dépense M1-A"));
+        depenseRepository.save(createDepenseEntity(maison1, null, "Dépense M1-B"));
+        depenseRepository.save(createDepenseEntity(maison2, null, "Dépense M2"));
+
+        // Act & Assert
+        mockMvc.perform(get("/api/maisons/{maisonId}/depenses", maison1.getId()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$", hasSize(2)))
+            .andExpect(jsonPath("$[0].description").value("Dépense M1-A"))
+            .andExpect(jsonPath("$[1].description").value("Dépense M1-B"));
+    }
+
+    // --- Méthodes utilitaires ---
+
+    private Maison createMaisonEntity(String quartier, String ville) {
+        Maison maison = new Maison();
+        maison.setQuartier(quartier);
+        maison.setVille(ville);
+        maison.setLot("750 ilot 12 Attié");
+        return maison;
+    }
+
+    private Appartement createAppartementEntity(Maison maison, String reference) {
+        Appartement apt = new Appartement();
+        apt.setReference(reference);
+        apt.setMaison(maison);
+        return apt;
+    }
+
+    private Depense createDepenseEntity(Maison maison, Appartement apt, String description) {
+        Depense depense = new Depense();
+        depense.setMontant(BigDecimal.TEN);
+        depense.setDescription(description);
+        depense.setDate(LocalDate.now());
+        depense.setTypeDepense(TypeDepense.DIVERS);
+        if (maison != null)
+            depense.setMaisonId(maison.getId());
+        if (apt != null)
+            depense.setAppartementId(apt.getId());
+        return depense;
     }
 }
