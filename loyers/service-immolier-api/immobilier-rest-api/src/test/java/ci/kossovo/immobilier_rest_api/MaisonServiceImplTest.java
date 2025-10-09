@@ -26,8 +26,6 @@ import ci.kossovo.loyer_core_api.events.immobiliers.MaisonCreatedEvent;
 import ci.kossovo.loyer_core_api.events.immobiliers.MaisonDeletedEvent;
 import ci.kossovo.loyer_core_api.events.immobiliers.MaisonUpdatedEvent;
 import ci.kossovo.loyer_core_api.exceptions.MaisonNotFoundException;
-import jakarta.persistence.EntityNotFoundException;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collections;
@@ -314,26 +312,26 @@ public class MaisonServiceImplTest {
         .hasMessage("Appartement non trouvé avec l'ID: " + nonExistentAppartementId);
   }
 
+  @Test
+  @DisplayName("findDepensesByMaisonId - Doit retourner la liste des dépenses")
+  void findDepensesByMaisonId_shouldReturnDepenseList() {
+    // ARRANGE
+    String maisonId = "maison-id-123";
+    Depense depense = new Depense(); // Simuler une dépense
+    List<Depense> depenses = Collections.singletonList(depense);
 
-   @Test
-    @DisplayName("findDepensesByMaisonId - Doit retourner la liste des dépenses")
-    void findDepensesByMaisonId_shouldReturnDepenseList() {
-        // ARRANGE
-        String maisonId = "maison-id-123";
-        Depense depense = new Depense(); // Simuler une dépense
-        List<Depense> depenses = Collections.singletonList(depense);
+    when(maisonRepository.existsById(maisonId)).thenReturn(true);
+    when(depenseRepository.findByMaisonId(maisonId)).thenReturn(depenses);
 
-        when(maisonRepository.existsById(maisonId)).thenReturn(true);
-        when(depenseRepository.findByMaisonId(maisonId)).thenReturn(depenses);
+    // ACT
+    List<DepenseResponseDTO> result = maisonService.findDepensesByMaisonId(maisonId);
 
-        // ACT
-        List<DepenseResponseDTO> result = maisonService.findDepensesByMaisonId(maisonId);
-
-        // ASSERT
-        verify(mapper, times(1)).toDepenseResponseDTOList(depenses);
-        // On pourrait aussi vérifier le contenu de la liste si le mapper était configuré
-        assertThat(result).isNotNull();
-    }
+    // ASSERT
+    verify(mapper, times(1)).toDepenseResponseDTOList(depenses);
+    // On pourrait aussi vérifier le contenu de la liste si le mapper était
+    // configuré
+    assertThat(result).isNotNull();
+  }
 
   // @Test
   // void createDepense_shouldThrowException_whenMaisonNotFound() {

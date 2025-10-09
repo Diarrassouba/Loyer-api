@@ -6,8 +6,6 @@ import ci.kossovo.immobilier_rest_api.dtos.MaisonRequestDTO;
 import ci.kossovo.immobilier_rest_api.dtos.MaisonResponseDTO;
 import ci.kossovo.immobilier_rest_api.dtos.depenses.DepenseRequestDTO;
 import ci.kossovo.immobilier_rest_api.dtos.depenses.DepenseResponseDTO;
-import jakarta.validation.Valid;
-
 import java.util.List;
 
 public interface MaisonService {
