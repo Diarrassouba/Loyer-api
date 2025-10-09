@@ -13,6 +13,7 @@ import ci.kossovo.immobilier_rest_api.dtos.AppartementRequestDTO;
 import ci.kossovo.immobilier_rest_api.dtos.MaisonRequestDTO;
 import ci.kossovo.immobilier_rest_api.model.Maison;
 import ci.kossovo.immobilier_rest_api.repositories.AppartementRepository;
+import ci.kossovo.immobilier_rest_api.repositories.DepenseRepository;
 import ci.kossovo.immobilier_rest_api.repositories.MaisonRepository;
 import ci.kossovo.loyer_core_api.enums.immobiliers.TypeAppartement;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,6 +29,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -61,12 +63,16 @@ public class MaisonControllerIntegrationTest {
     @Autowired
     private AppartementRepository appartementRepository;
 
-    @MockBean
+    @Autowired
+    private DepenseRepository depenseRepository;
+
+    @MockitoBean
     private EventGateway eventGateway;
 
     // Nettoyer la BDD après chaque test pour garantir l'isolation
     @AfterEach
     void tearDown() {
+        depenseRepository.deleteAll();
         appartementRepository.deleteAll();
         maisonRepository.deleteAll();
     }
