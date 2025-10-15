@@ -5,15 +5,15 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>ci.kossovo</groupId>
-        <artifactId>service-immolier-api</artifactId>
+        <artifactId>service-notation-api</artifactId>
         <version>0.0.1-SNAPSHOT</version>
         <relativePath />
         <!-- lookup parent from repository -->
     </parent>
     <groupId>ci.kossovo</groupId>
-    <artifactId>immobilier-rest-api</artifactId>
+    <artifactId>raiting-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>immobilier-rest-api</name>
+    <name>raiting-service</name>
     <description>Demo project for Spring Boot</description>
     <url />
     <licenses>
