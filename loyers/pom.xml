@@ -9,6 +9,7 @@
         <module>service-immolier-api</module>
         <module>service-locataire-api</module>
         <module>service-notation-api</module>
+        <module>service-financier-api</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
