@@ -4,7 +4,4 @@ import java.math.BigDecimal;
 import java.time.YearMonth;
 
 public record RetardDePaiementDetecteEvent(
-    String contratId,
-    YearMonth moisAnnee,
-    BigDecimal montantEnRetard
-) {}
+    String contratId, String locataireId, YearMonth moisAnnee, BigDecimal montantEnRetard) {}

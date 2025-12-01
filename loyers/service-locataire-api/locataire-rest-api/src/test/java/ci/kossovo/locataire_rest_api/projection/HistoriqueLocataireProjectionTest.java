@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import ci.kossovo.locataire_rest_api.models.HistoriqueLocataire;
 import ci.kossovo.locataire_rest_api.repositories.HistoriqueLocataireRepository;
+import ci.kossovo.loyer_core_api.events.financial.LatePaymentObservedEvent;
 import ci.kossovo.loyer_core_api.events.locations.ContratCreatedEvent;
-import ci.kossovo.loyer_core_api.events.locations.ObservedLatePaymentEvent;
 import ci.kossovo.loyer_core_api.events.raiting.TenantNoteEvent;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -38,10 +38,10 @@ public class HistoriqueLocataireProjectionTest {
     ContratCreatedEvent deuxiemeContrat =
         new ContratCreatedEvent(
             "c2", locataireId, "apt-2", "APPARTEMENT", BigDecimal.TEN, LocalDate.now());
-    ObservedLatePaymentEvent premierRetard =
-        new ObservedLatePaymentEvent("c1", locataireId, YearMonth.now(), BigDecimal.ONE);
-    ObservedLatePaymentEvent deuxiemeRetard =
-        new ObservedLatePaymentEvent("c2", locataireId, YearMonth.now(), BigDecimal.ONE);
+    LatePaymentObservedEvent premierRetard =
+        new LatePaymentObservedEvent("c1", locataireId, YearMonth.now(), BigDecimal.ONE);
+    LatePaymentObservedEvent deuxiemeRetard =
+        new LatePaymentObservedEvent("c2", locataireId, YearMonth.now(), BigDecimal.ONE);
     TenantNoteEvent premiereNote =
         new TenantNoteEvent("n1", locataireId, "c1", 4.5, LocalDate.now());
     TenantNoteEvent deuxiemeNote =

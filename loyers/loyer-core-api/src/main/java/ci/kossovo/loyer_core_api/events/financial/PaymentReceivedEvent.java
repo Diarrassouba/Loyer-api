@@ -6,6 +6,7 @@ import java.util.UUID;
 
 public record PaymentReceivedEvent(
     String contratId,
+     String locataireId, // Ajout crucial pour notre projection
     UUID paiementId,
     BigDecimal montantPaye,
     LocalDate datePaiement,

@@ -2,9 +2,9 @@ package ci.kossovo.locataire_rest_api.projection;
 
 import ci.kossovo.locataire_rest_api.models.HistoriqueLocataire;
 import ci.kossovo.locataire_rest_api.repositories.HistoriqueLocataireRepository;
+import ci.kossovo.loyer_core_api.events.financial.LatePaymentObservedEvent;
 import ci.kossovo.loyer_core_api.events.financial.PaymentReceivedEvent;
 import ci.kossovo.loyer_core_api.events.locations.ContratCreatedEvent;
-import ci.kossovo.loyer_core_api.events.locations.ObservedLatePaymentEvent;
 import ci.kossovo.loyer_core_api.events.raiting.TenantNoteEvent;
 import org.axonframework.eventhandling.EventHandler;
 import org.springframework.stereotype.Component;
@@ -30,7 +30,7 @@ public class HistoriqueLocataireProjection {
 
   // Écoute un événement du SERVICE FINANCIER
   @EventHandler
-  public void on(ObservedLatePaymentEvent evt) {
+  public void on(LatePaymentObservedEvent evt) {
     // Le locataireId doit être dans l'événement !
     if (evt.locataireId() == null) return;
 
