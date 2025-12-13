@@ -8,7 +8,8 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 
 import ci.kossovo.locataire_rest_api.dtos.ContratRequestDTO;
 import ci.kossovo.locataire_rest_api.dtos.ContratResponseDTO;
-import ci.kossovo.locataire_rest_api.dtos.LocataireDTO;
+import ci.kossovo.locataire_rest_api.dtos.LocataireResponseDto;
+import ci.kossovo.locataire_rest_api.dtos.LocataireRequestDTO;
 import ci.kossovo.locataire_rest_api.models.ContratLocation;
 import ci.kossovo.locataire_rest_api.models.Locataire;
 
@@ -16,9 +17,14 @@ import ci.kossovo.locataire_rest_api.models.Locataire;
 public interface TenancyMapper {
 
     // --- Locataire ---
-    LocataireDTO toLocataireDTO(Locataire locataire);
+    LocataireResponseDto toLocataireDTO(Locataire locataire);
 
-    Locataire toLocataire(LocataireDTO dto);
+    Locataire toLocataire(LocataireResponseDto dto);
+
+    @Mapping(target = "id", ignore = true)
+    Locataire toLocataire(LocataireRequestDTO dto);
+
+    LocataireRequestDTO toLocataireRequest(LocataireRequestDTO dto);
 
     // --- Contrat ---
 
@@ -33,6 +39,6 @@ public interface TenancyMapper {
 
     List<ContratResponseDTO> toContratResponseDTOs(List<ContratLocation> contrats);
 
-    List<LocataireDTO> toLocataireDTOs(List<Locataire> locataires);
+    List<LocataireResponseDto> toLocataireDTOs(List<Locataire> locataires);
 
 }

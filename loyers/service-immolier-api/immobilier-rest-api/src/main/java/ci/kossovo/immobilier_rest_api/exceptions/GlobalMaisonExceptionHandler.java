@@ -1,6 +1,6 @@
 package ci.kossovo.immobilier_rest_api.exceptions;
 
-import ci.kossovo.immobilier_rest_api.dtos.ErrorMaisonResponseDTO;
+import ci.kossovo.loyer_core_api.dtos.ErrorResponseDTO;
 import ci.kossovo.loyer_core_api.exceptions.MaisonNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
@@ -22,10 +22,10 @@ public class GlobalMaisonExceptionHandler {
    * échoue). Renvoie un statut 404 Not Found.
    */
   @ExceptionHandler(MaisonNotFoundException.class)
-  public ResponseEntity<ErrorMaisonResponseDTO> handleEntityNotFoundException(MaisonNotFoundException ex,
+  public ResponseEntity<ErrorResponseDTO> handleEntityNotFoundException(MaisonNotFoundException ex,
       HttpServletRequest request) {
 
-    ErrorMaisonResponseDTO errorResponse = new ErrorMaisonResponseDTO(HttpStatus.NOT_FOUND.value(), "Not Found",
+    ErrorResponseDTO errorResponse = new ErrorResponseDTO(HttpStatus.NOT_FOUND.value(), "Not Found",
         ex.getMessage(), request.getRequestURI());
     return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
   }
@@ -35,7 +35,7 @@ public class GlobalMaisonExceptionHandler {
    * statut 400 Bad Request avec les détails des champs invalides.
    */
   @ExceptionHandler(MethodArgumentNotValidException.class)
-  public ResponseEntity<ErrorMaisonResponseDTO> handleValidationExceptions(MethodArgumentNotValidException ex,
+  public ResponseEntity<ErrorResponseDTO> handleValidationExceptions(MethodArgumentNotValidException ex,
       HttpServletRequest request) {
 
     Map<String, List<String>> errors = new HashMap<>();
@@ -45,7 +45,7 @@ public class GlobalMaisonExceptionHandler {
       errors.computeIfAbsent(fieldName, k -> new ArrayList<>()).add(errorMessage);
     });
 
-    ErrorMaisonResponseDTO errorResponse = new ErrorMaisonResponseDTO(HttpStatus.BAD_REQUEST.value(), "Bad Request",
+    ErrorResponseDTO errorResponse = new ErrorResponseDTO(HttpStatus.BAD_REQUEST.value(), "Bad Request",
         "La validation de la requête a échoué", request.getRequestURI(), errors);
     return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
   }
@@ -55,10 +55,10 @@ public class GlobalMaisonExceptionHandler {
    * manuelles. Renvoie un statut 400 Bad Request.
    */
   @ExceptionHandler(IllegalArgumentException.class)
-  public ResponseEntity<ErrorMaisonResponseDTO> handleIllegalArgumentException(IllegalArgumentException ex,
+  public ResponseEntity<ErrorResponseDTO> handleIllegalArgumentException(IllegalArgumentException ex,
       HttpServletRequest request) {
 
-    ErrorMaisonResponseDTO errorResponse = new ErrorMaisonResponseDTO(HttpStatus.BAD_REQUEST.value(), "Bad Request",
+    ErrorResponseDTO errorResponse = new ErrorResponseDTO(HttpStatus.BAD_REQUEST.value(), "Bad Request",
         ex.getMessage(), request.getRequestURI());
     return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
   }
@@ -69,12 +69,12 @@ public class GlobalMaisonExceptionHandler {
    * il faudrait loguer l'exception 'ex' ici.
    */
   @ExceptionHandler(Exception.class)
-  public ResponseEntity<ErrorMaisonResponseDTO> handleGenericException(Exception ex, HttpServletRequest request) {
+  public ResponseEntity<ErrorResponseDTO> handleGenericException(Exception ex, HttpServletRequest request) {
 
     // Log l'exception pour le débogage
     // log.error("Une erreur inattendue est survenue", ex);
 
-    ErrorMaisonResponseDTO errorResponse = new ErrorMaisonResponseDTO(HttpStatus.INTERNAL_SERVER_ERROR.value(),
+    ErrorResponseDTO errorResponse = new ErrorResponseDTO(HttpStatus.INTERNAL_SERVER_ERROR.value(),
         "Internal Server Error", "Une erreur interne est survenue. Veuillez contacter le support.",
         request.getRequestURI());
     return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);

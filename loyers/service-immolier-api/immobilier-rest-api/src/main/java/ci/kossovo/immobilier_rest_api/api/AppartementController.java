@@ -2,9 +2,8 @@ package ci.kossovo.immobilier_rest_api.api;
 
 import ci.kossovo.immobilier_rest_api.dtos.AppartementRequestDTO;
 import ci.kossovo.immobilier_rest_api.dtos.AppartementResponseDTO;
-import ci.kossovo.immobilier_rest_api.dtos.ErrorMaisonResponseDTO;
-
 import ci.kossovo.immobilier_rest_api.services.MaisonService;
+import ci.kossovo.loyer_core_api.dtos.ErrorResponseDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -41,7 +40,7 @@ public class AppartementController {
   @Operation(summary = "Crée une nouvelle appartement dans une maison")
   @ApiResponses(value = {
       @ApiResponse(responseCode = "201", description = "Appartement créé avec succès", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = AppartementResponseDTO.class))),
-      @ApiResponse(responseCode = "400", description = "Données de la requête invalides", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorMaisonResponseDTO.class))) })
+      @ApiResponse(responseCode = "400", description = "Données de la requête invalides", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponseDTO.class))) })
   @PostMapping
   public ResponseEntity<AppartementResponseDTO> createAppartement(@PathVariable String maisonId,
       @Valid @RequestBody AppartementRequestDTO requestDTO) {
@@ -62,7 +61,7 @@ public class AppartementController {
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "Appartement trouvé", content = {
           @Content(mediaType = "application/json", schema = @Schema(implementation = AppartementResponseDTO.class)) }),
-      @ApiResponse(responseCode = "404", description = "Appartement non trouvé", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMaisonResponseDTO.class))) })
+      @ApiResponse(responseCode = "404", description = "Appartement non trouvé", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDTO.class))) })
   @GetMapping("/{id}")
   public ResponseEntity<AppartementResponseDTO> getAppartementById(@PathVariable String maisonId,
       @PathVariable String id) {
@@ -87,7 +86,7 @@ public class AppartementController {
 
   @Operation(summary = "Supprime un appartement par son ID")
   @ApiResponses(value = { @ApiResponse(responseCode = "204", description = "Appartement supprimé avec succès"),
-      @ApiResponse(responseCode = "404", description = "Appartement non trouvé", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMaisonResponseDTO.class))) })
+      @ApiResponse(responseCode = "404", description = "Appartement non trouvé", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDTO.class))) })
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> deleteAppartement(@PathVariable String maisonId, @PathVariable String id) {
     maisonService.deleteAppartement(maisonId, id);

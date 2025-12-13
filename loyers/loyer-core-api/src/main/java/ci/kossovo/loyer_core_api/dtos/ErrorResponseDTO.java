@@ -1,10 +1,10 @@
-package ci.kossovo.immobilier_rest_api.dtos;
+package ci.kossovo.loyer_core_api.dtos;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
-public record ErrorMaisonResponseDTO(
+public record ErrorResponseDTO(
     LocalDateTime timestamp,
     int status,
     String error, // Le code d'erreur HTTP (ex: "Not Found", "Bad Request")
@@ -13,12 +13,12 @@ public record ErrorMaisonResponseDTO(
     Map<String, List<String>> validationErrors // Spécifique pour les erreurs de validation
     ) {
   // Constructeur simplifié pour les erreurs non liées à la validation
-  public ErrorMaisonResponseDTO(int status, String error, String message, String path) {
+  public ErrorResponseDTO(int status, String error, String message, String path) {
     this(LocalDateTime.now(), status, error, message, path, null);
   }
 
   // Constructeur pour les erreurs de validation
-  public ErrorMaisonResponseDTO(
+  public ErrorResponseDTO(
       int status,
       String error,
       String message,

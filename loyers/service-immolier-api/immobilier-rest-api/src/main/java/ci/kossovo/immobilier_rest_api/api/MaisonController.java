@@ -1,9 +1,9 @@
 package ci.kossovo.immobilier_rest_api.api;
 
-import ci.kossovo.immobilier_rest_api.dtos.ErrorMaisonResponseDTO;
 import ci.kossovo.immobilier_rest_api.dtos.MaisonRequestDTO;
 import ci.kossovo.immobilier_rest_api.dtos.MaisonResponseDTO;
 import ci.kossovo.immobilier_rest_api.services.MaisonService;
+import ci.kossovo.loyer_core_api.dtos.ErrorResponseDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -46,7 +46,7 @@ public class MaisonController {
             content =
                 @Content(
                     mediaType = MediaType.APPLICATION_JSON_VALUE,
-                    schema = @Schema(implementation = ErrorMaisonResponseDTO.class)))
+                    schema = @Schema(implementation = ErrorResponseDTO.class)))
       })
   @PostMapping
   public ResponseEntity<MaisonResponseDTO> createMaison(
@@ -85,7 +85,7 @@ public class MaisonController {
             content =
                 @Content(
                     mediaType = "application/json",
-                    schema = @Schema(implementation = ErrorMaisonResponseDTO.class)))
+                    schema = @Schema(implementation = ErrorResponseDTO.class)))
       })
   @GetMapping("/{id}")
   public ResponseEntity<MaisonResponseDTO> getMaisonById(@PathVariable String id) {
@@ -119,7 +119,7 @@ public class MaisonController {
             content =
                 @Content(
                     mediaType = "application/json",
-                    schema = @Schema(implementation = ErrorMaisonResponseDTO.class)))
+                    schema = @Schema(implementation = ErrorResponseDTO.class)))
       })
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> deleteMaison(@PathVariable String id) {

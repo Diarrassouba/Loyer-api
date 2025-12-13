@@ -8,7 +8,8 @@ import org.springframework.stereotype.Service;
 
 import ci.kossovo.locataire_rest_api.dtos.ContratRequestDTO;
 import ci.kossovo.locataire_rest_api.dtos.ContratResponseDTO;
-import ci.kossovo.locataire_rest_api.dtos.LocataireDTO;
+import ci.kossovo.locataire_rest_api.dtos.LocataireResponseDto;
+import ci.kossovo.locataire_rest_api.dtos.LocataireRequestDTO;
 import ci.kossovo.locataire_rest_api.mappers.TenancyMapper;
 import ci.kossovo.locataire_rest_api.models.ContratLocation;
 import ci.kossovo.locataire_rest_api.models.DisponibiliteBien;
@@ -20,8 +21,8 @@ import ci.kossovo.locataire_rest_api.repositories.LocataireRepository;
 import ci.kossovo.locataire_rest_api.services.ContratService;
 import ci.kossovo.loyer_core_api.events.locations.ContratCreatedEvent;
 import ci.kossovo.loyer_core_api.events.locations.ContratFinishedEvent;
-import ci.kossovo.loyer_core_api.exceptions.ContratNotFoundException;
-import ci.kossovo.loyer_core_api.exceptions.LocataireNotFoundException;
+import ci.kossovo.loyer_core_api.events.locations.LocataireCreatedEvent;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 
 @Service
@@ -76,7 +77,7 @@ public class ContratServiceImpl implements ContratService {
     @Override
     public ContratResponseDTO terminerContrat(String id) {
         ContratLocation contrat = contratRepository.findById(id)
-                .orElseThrow(() -> new ContratNotFoundException("Contrat non trouvé: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Contrat non trouvé: " + id));
 
         if (!contrat.isActif())
             throw new IllegalStateException("Le contrat est déjà terminé.");
@@ -96,43 +97,49 @@ public class ContratServiceImpl implements ContratService {
     @Override
     public ContratResponseDTO findContratById(String id) {
         ContratLocation contrat = contratRepository.findById(id)
-                .orElseThrow(() -> new ContratNotFoundException("Contrat non trouvé avec l'ID: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Contrat non trouvé avec l'ID: " + id));
         return mapper.toContratResponseDTO(contrat);
     }
 
     // --- Implémentations pour Locataire et autres finders ---
 
     @Override
-    public LocataireDTO createLocataire(LocataireDTO locataireDTO) {
-        Locataire locataire = mapper.toLocataire(locataireDTO);
-        // On pourrait publier un LocataireCreeEvenement si d'autres services s'y
+    public LocataireResponseDto createLocataire(LocataireRequestDTO locataireRequestDTO) {
+        Locataire locataire = mapper.toLocataire(locataireRequestDTO);
+
+        // On pourrait publier un LocataireCreeEvent si d'autres services s'y
         // intéressaient
-        return mapper.toLocataireDTO(locataireRepository.save(locataire));
+
+        Locataire savedLocataire = locataireRepository.save(locataire);
+        eventGateway.publish(new LocataireCreatedEvent(savedLocataire.getId(), savedLocataire.getNom(),
+                savedLocataire.getPrenom(), savedLocataire.getEmail(), savedLocataire.getTelephone()));
+
+        return mapper.toLocataireDTO(savedLocataire);
     }
 
     @Override
-    public LocataireDTO findLocataireById(String id) {
+    public LocataireResponseDto findLocataireById(String id) {
         Locataire locataire = locataireRepository.findById(id)
-                .orElseThrow(() -> new LocataireNotFoundException("Locataire non trouvé avec l'ID: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Locataire non trouvé avec l'ID: " + id));
         return mapper.toLocataireDTO(locataire);
     }
 
     @Override
-    public List<LocataireDTO> findAllLocataires() {
+    public List<LocataireResponseDto> findAllLocataires() {
         List<Locataire> locataires = locataireRepository.findAll();
         return mapper.toLocataireDTOs(locataires);
     }
 
     @Override
-    public LocataireDTO updateLocataire(String id, LocataireDTO locataireDTO) {
+    public LocataireResponseDto updateLocataire(String id, LocataireRequestDTO locataireRequestDto) {
         Locataire existingLocataire = locataireRepository.findById(id)
-                .orElseThrow(() -> new LocataireNotFoundException("Locataire non trouvé avec l'ID: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Locataire non trouvé avec l'ID: " + id));
 
         // Mettre à jour les champs pertinents
-        existingLocataire.setNom(locataireDTO.nom());
-        existingLocataire.setPrenom(locataireDTO.prenom());
-        existingLocataire.setEmail(locataireDTO.email());
-        existingLocataire.setTelephone(locataireDTO.telephone());
+        existingLocataire.setNom(locataireRequestDto.nom());
+        existingLocataire.setPrenom(locataireRequestDto.prenom());
+        existingLocataire.setEmail(locataireRequestDto.email());
+        existingLocataire.setTelephone(locataireRequestDto.telephone());
 
         Locataire updatedLocataire = locataireRepository.save(existingLocataire);
         return mapper.toLocataireDTO(updatedLocataire);

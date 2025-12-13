@@ -4,19 +4,19 @@ import java.util.List;
 
 import ci.kossovo.locataire_rest_api.dtos.ContratRequestDTO;
 import ci.kossovo.locataire_rest_api.dtos.ContratResponseDTO;
-import ci.kossovo.locataire_rest_api.dtos.LocataireDTO;
+import ci.kossovo.locataire_rest_api.dtos.LocataireRequestDTO;
+import ci.kossovo.locataire_rest_api.dtos.LocataireResponseDto;
 
 public interface ContratService {
 
     // --- Locataire ---
-    LocataireDTO createLocataire(LocataireDTO locataireDTO);
+    LocataireResponseDto createLocataire(LocataireRequestDTO locataireDTO);
 
-    LocataireDTO findLocataireById(String id);
+    LocataireResponseDto findLocataireById(String id);
 
-    List<LocataireDTO> findAllLocataires();
+    List<LocataireResponseDto> findAllLocataires();
 
-    LocataireDTO updateLocataire(String id, LocataireDTO locataireDTO);
-
+    LocataireResponseDto updateLocataire(String id, LocataireRequestDTO locataireDTO);
     // --- Contrat ---
     ContratResponseDTO createContrat(ContratRequestDTO contratDTO);
 
