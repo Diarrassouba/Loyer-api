@@ -1,61 +1,51 @@
 package ci.kossovo.raiting_service.api;
 
-import java.time.LocalDate;
-import java.util.concurrent.CompletableFuture;
-
-import org.axonframework.eventhandling.gateway.EventGateway;
+import ci.kossovo.raiting_service.dtos.CreerNotationRequest;
+import ci.kossovo.raiting_service.dtos.NotationResponseDTO;
+import ci.kossovo.raiting_service.services.NotationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import java.util.List;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import ci.kossovo.loyer_core_api.events.raiting.TenantNoteEvent;
-import ci.kossovo.raiting_service.dtos.CreerNotationRequest;
-import ci.kossovo.raiting_service.models.Notation;
-import ci.kossovo.raiting_service.repositories.NotationRepository;
 
 @RestController
 @RequestMapping("/api/notations")
+@Tag(name = "Gestion des Notations", description = "API pour noter les locataires")
 public class NotationController {
 
-  private final NotationRepository notationRepository;
-  private final EventGateway eventGateway;
+  private final NotationService notationService;
 
   // DTO pour la requête de création
-  public NotationController(NotationRepository notationRepository, EventGateway eventGateway) {
-    this.notationRepository = notationRepository;
-    this.eventGateway = eventGateway;
+  public NotationController(NotationService notationService) {
+    this.notationService = notationService;
   }
 
+  @Operation(summary = "Crée une nouvelle notation pour un locataire sur un contrat")
   @PostMapping
-  public CompletableFuture<String> creerNotation(@RequestBody CreerNotationRequest request) {
-    // Logique de validation (scores entre 1 et 5, etc.)
-    // ...
+  public ResponseEntity<NotationResponseDTO> createNotation(
+      @Valid @RequestBody CreerNotationRequest requestDTO) {
+    NotationResponseDTO createdNotation = notationService.createNotation(requestDTO);
+    return ResponseEntity.status(HttpStatus.CREATED).body(createdNotation);
+  }
 
-    // 1. Sauvegarder la notation
-    Notation notation = new Notation();
-    notation.setLocataireId(request.locataireId());
-    notation.setContratId(request.contratId());
-    notation.setDateNotation(LocalDate.now());
-    notation.setScoreProprete(request.scoreProprete());
-    notation.setScoreCommunication(request.scoreCommunication());
-    notation.setScoreRespectVoisinage(request.scoreRespectVoisinage());
-    notation.setScoreRespectReglement(request.scoreRespectReglement());
-    notation.setCommentaire(request.commentaire());
-    notation.setNotePar(request.notePar());
+  @Operation(summary = "Récupère toutes les notations pour un locataire spécifique")
+  @GetMapping(params = "locataireId") // Endpoint: /api/notations?locataireId=...
+  public List<NotationResponseDTO> getNotationsByLocataire(@RequestParam String locataireId) {
+    return notationService.findNotationsByLocataireId(locataireId);
+  }
 
-    Notation notationSauvegardee = notationRepository.save(notation);
-
-    // 2. Calculer le score moyen
-    double scoreMoyen = (notation.getScoreProprete() + notation.getScoreCommunication()
-        + notation.getScoreRespectVoisinage() + notation.getScoreRespectReglement()) / 4.0;
-
-    // 3. Préparer et publier l'événement
-    TenantNoteEvent event = new TenantNoteEvent(notationSauvegardee.getId(), notationSauvegardee.getLocataireId(),
-        notationSauvegardee.getContratId(), scoreMoyen, notationSauvegardee.getDateNotation());
-
-    eventGateway.publish(event);
-    return CompletableFuture
-        .completedFuture("Notation " + notationSauvegardee.getId() + " enregistrée et événement publié.");
+  @Operation(summary = "Récupère une notation par son ID unique")
+  @GetMapping("/{id}")
+  public NotationResponseDTO getNotationById(@PathVariable String id) {
+    return notationService.findNotationById(id);
   }
 }
