@@ -21,14 +21,12 @@ import ci.kossovo.locataire_rest_api.repositories.LocataireRepository;
 import ci.kossovo.locataire_rest_api.services.impl.ContratServiceImpl;
 import ci.kossovo.loyer_core_api.events.locations.ContratCreatedEvent;
 import ci.kossovo.loyer_core_api.events.locations.LocataireCreatedEvent;
-import ci.kossovo.loyer_core_api.events.locations.LocataireUpdatedEvent;
 import jakarta.persistence.EntityNotFoundException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Optional;
 import org.axonframework.eventhandling.gateway.EventGateway;
-import org.checkerframework.checker.units.qual.t;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

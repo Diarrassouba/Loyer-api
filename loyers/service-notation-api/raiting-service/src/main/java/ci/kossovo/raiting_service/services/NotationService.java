@@ -27,4 +27,5 @@ public interface NotationService {
      * @return Le DTO de la notation trouvée.
      */
     NotationResponseDTO findNotationById(String id);
+    List<NotationResponseDTO> findAllNotations();
 }

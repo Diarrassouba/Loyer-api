@@ -31,8 +31,7 @@ public class NotationController {
 
   @Operation(summary = "Crée une nouvelle notation pour un locataire sur un contrat")
   @PostMapping
-  public ResponseEntity<NotationResponseDTO> createNotation(
-      @Valid @RequestBody CreerNotationRequest requestDTO) {
+  public ResponseEntity<NotationResponseDTO> createNotation(@Valid @RequestBody CreerNotationRequest requestDTO) {
     NotationResponseDTO createdNotation = notationService.createNotation(requestDTO);
     return ResponseEntity.status(HttpStatus.CREATED).body(createdNotation);
   }
@@ -48,4 +47,11 @@ public class NotationController {
   public NotationResponseDTO getNotationById(@PathVariable String id) {
     return notationService.findNotationById(id);
   }
+
+  @Operation(summary = "Récupère toutes les notations")
+  @GetMapping
+  public List<NotationResponseDTO> getAllNotations() {
+    return notationService.findAllNotations();
+  }
+
 }

@@ -27,12 +27,8 @@ public class NotationServiceImpl implements NotationService {
   private final ContratValideRepository contratValideRepository;
   private final LocataireValideRepository locataireValideRepository;
 
-  public NotationServiceImpl(
-      NotationRepository notationRepository,
-      RatingMapper mapper,
-      EventGateway eventGateway,
-      ContratValideRepository contratValideRepository,
-      LocataireValideRepository locataireValideRepository) {
+  public NotationServiceImpl(NotationRepository notationRepository, RatingMapper mapper, EventGateway eventGateway,
+      ContratValideRepository contratValideRepository, LocataireValideRepository locataireValideRepository) {
     this.notationRepository = notationRepository;
     this.mapper = mapper;
     this.eventGateway = eventGateway;
@@ -43,7 +39,8 @@ public class NotationServiceImpl implements NotationService {
   @Override
   public NotationResponseDTO createNotation(CreerNotationRequest requestDTO) {
 
-    // Logique métier de validation (si nécessaire, ex: vérifier que le contrat existe)
+    // Logique métier de validation (si nécessaire, ex: vérifier que le contrat
+    // existe)
     validateIds(requestDTO);
 
     // Pour l'instant, on se fie à la validation du DTO.
@@ -57,13 +54,9 @@ public class NotationServiceImpl implements NotationService {
     NotationResponseDTO responseDTO = mapper.toNotationResponseDTO(savedNotation);
 
     // 3. Publier l'événement avec le score moyen
-    eventGateway.publish(
-        new TenantNoteEvent(
-            responseDTO.id(),
-            responseDTO.locataireId(),
-            responseDTO.contratId(),
-            responseDTO.scoreMoyen(), // Utiliser le score calculé par le mapper
-            responseDTO.dateNotation()));
+    eventGateway.publish(new TenantNoteEvent(responseDTO.id(), responseDTO.locataireId(), responseDTO.contratId(),
+        responseDTO.scoreMoyen(), // Utiliser le score calculé par le mapper
+        responseDTO.dateNotation()));
 
     return responseDTO;
   }
@@ -77,13 +70,19 @@ public class NotationServiceImpl implements NotationService {
   @Override
   @Transactional(readOnly = true)
   public NotationResponseDTO findNotationById(String id) {
-    return notationRepository
-        .findById(id)
-        .map(mapper::toNotationResponseDTO)
+    return notationRepository.findById(id).map(mapper::toNotationResponseDTO)
         .orElseThrow(() -> new EntityNotFoundException("Notation non trouvée avec l'ID: " + id));
   }
 
-  /******************** Méthode privée pour encapsuler la logique de validation. ************************/
+  @Override
+  @Transactional(readOnly = true)
+  public List<NotationResponseDTO> findAllNotations() {
+    return mapper.toNotationResponseDTOList(notationRepository.findAll());
+  }
+
+  /********************
+   * Méthode privée pour encapsuler la logique de validation.
+   ************************/
   private void validateIds(CreerNotationRequest dto) {
     // 1. Vérifier si le locataire existe
     if (!locataireValideRepository.existsById(dto.locataireId())) {
@@ -91,20 +90,13 @@ public class NotationServiceImpl implements NotationService {
     }
 
     // 2. Vérifier si le contrat existe et s'il est bien associé au bon locataire
-    contratValideRepository
-        .findById(dto.contratId())
-        .map(
-            contrat -> {
-              if (!contrat.getLocataireId().equals(dto.locataireId())) {
-                throw new IllegalArgumentException(
-                    "Le contrat "
-                        + dto.contratId()
-                        + " n'est pas associé au locataire "
-                        + dto.locataireId());
-              }
-              return contrat;
-            })
-        .orElseThrow(
-            () -> new EntityNotFoundException("Contrat non trouvé avec l'ID: " + dto.contratId()));
+    contratValideRepository.findById(dto.contratId()).map(contrat -> {
+      if (!contrat.getLocataireId().equals(dto.locataireId())) {
+        throw new IllegalArgumentException(
+            "Le contrat " + dto.contratId() + " n'est pas associé au locataire " + dto.locataireId());
+      }
+      return contrat;
+    }).orElseThrow(() -> new EntityNotFoundException("Contrat non trouvé avec l'ID: " + dto.contratId()));
   }
+
 }
