@@ -7,7 +7,7 @@ import org.axonframework.modelling.command.TargetAggregateIdentifier;
 
 // Commande pour générer le loyer dû pour un mois donné
 // Sera typiquement envoyée par un scheduler le 1er du mois
-public record GenererLoyerMensuelCommand(
+public record GenerateMonthlyRentCommand(
     @TargetAggregateIdentifier String contratId,
     UUID loyerId, // ID unique pour cette instance de loyer
     YearMonth moisAnnee,
