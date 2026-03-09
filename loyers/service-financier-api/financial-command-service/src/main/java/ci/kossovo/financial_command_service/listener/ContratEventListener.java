@@ -6,11 +6,14 @@ import ci.kossovo.loyer_core_api.events.locations.ContratCreatedEvent;
 import ci.kossovo.loyer_core_api.events.locations.ContratFinishedEvent;
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.axonframework.eventhandling.EventHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ContratEventListener {
 
+  private static final Logger log = LoggerFactory.getLogger(ContratEventListener.class);
   private final CommandGateway commandGateway;
 
   public ContratEventListener(CommandGateway commandGateway) {
@@ -23,6 +26,11 @@ public class ContratEventListener {
    */
   @EventHandler
   public void on(ContratCreatedEvent evt) {
+
+    // 1. LOG CRUCIAL : L'événement arrive-t-il ici ?
+    log.info("===============");
+    log.info("1. ÉVÉNEMENT REÇU : ContratCreeEvenement pour contrat [{}]", evt.contratId());
+    log.info("===============");
     System.out.println("EVENT LISTENER: ContratCreatedEvent reçu pour contrat " + evt.contratId());
 
     InitializeFinancialAccountCommand cmd =
@@ -30,7 +38,20 @@ public class ContratEventListener {
             evt.contratId(), evt.locataireId(), evt.montantLoyerMensuel());
 
     // Envoie la commande pour créer une nouvelle instance de l'agrégat.
-    commandGateway.send(cmd);
+    // 2. LOG CRUCIAL : Que se passe-t-il quand on envoie la commande ?
+    commandGateway
+        .send(cmd)
+        .whenComplete(
+            (result, exception) -> {
+              if (exception != null) {
+                log.error(
+                    "!!! 2. ÉCHEC DE LA COMMANDE D'INITIALISATION pour contrat [{}] !!!",
+                    evt.contratId(),
+                    exception);
+              } else {
+                log.info("2. SUCCÈS : Agrégat initialisé pour contrat [{}]", evt.contratId());
+              }
+            });
   }
 
   @EventHandler

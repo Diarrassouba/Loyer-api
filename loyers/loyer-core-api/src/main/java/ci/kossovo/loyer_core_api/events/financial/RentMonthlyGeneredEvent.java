@@ -4,5 +4,5 @@ import java.math.BigDecimal;
 import java.time.YearMonth;
 import java.util.UUID;
 
-public record RentMonthlyGenereEvent(
+public record RentMonthlyGeneredEvent(
     String contratId, UUID loyerId, YearMonth moisAnnee, BigDecimal montantDu) {}

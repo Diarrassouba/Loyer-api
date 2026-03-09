@@ -8,7 +8,7 @@ import ci.kossovo.loyer_core_api.events.financial.FinancialAccountCloturedEvent;
 import ci.kossovo.loyer_core_api.events.financial.FinancialAccountInitialisedEvent;
 import ci.kossovo.loyer_core_api.events.financial.PaymentInAdvanceDetectEvent;
 import ci.kossovo.loyer_core_api.events.financial.PaymentReceivedEvent;
-import ci.kossovo.loyer_core_api.events.financial.RentMonthlyGenereEvent;
+import ci.kossovo.loyer_core_api.events.financial.RentMonthlyGeneredEvent;
 import java.math.BigDecimal;
 import java.time.YearMonth;
 import java.util.Map;
@@ -23,6 +23,7 @@ import org.axonframework.spring.stereotype.Aggregate;
 public class CompteFinancierContratAggregate {
 
   @AggregateIdentifier private String contratId;
+
   private String locataireId;
   private BigDecimal montantLoyerMensuelDeBase;
   private BigDecimal soldeCourant; // Négatif = dette du locataire, Positif = avance du locataire
@@ -69,7 +70,7 @@ public class CompteFinancierContratAggregate {
     }
 
     AggregateLifecycle.apply(
-        new RentMonthlyGenereEvent(
+        new RentMonthlyGeneredEvent(
             cmd.contratId(),
             UUID.randomUUID(), // Génère un ID unique pour ce loyer
             cmd.moisAnnee(),
@@ -78,7 +79,7 @@ public class CompteFinancierContratAggregate {
 
   // 4. Gestionnaire de l'événement de génération de loyer
   @EventSourcingHandler
-  public void on(RentMonthlyGenereEvent evt) {
+  public void on(RentMonthlyGeneredEvent evt) {
     this.loyersDus.put(evt.moisAnnee(), evt.montantDu());
 
     // La dette du locataire augmente du montant du loyer généré
