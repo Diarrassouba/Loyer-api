@@ -1,5 +1,6 @@
 package ci.kossovo.locataire_rest_api.projection;
 
+import org.axonframework.config.ProcessingGroup;
 import org.axonframework.eventhandling.EventHandler;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +12,7 @@ import ci.kossovo.loyer_core_api.events.locations.ContratCreatedEvent;
 import ci.kossovo.loyer_core_api.events.locations.ContratFinishedEvent;
 
 @Component
+@ProcessingGroup("tenancy-projections")
 public class DisponibiliteProjection {
 
      private final DisponibiliteBienRepository repository;

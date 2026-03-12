@@ -6,10 +6,13 @@ import ci.kossovo.loyer_core_api.events.financial.LatePaymentObservedEvent;
 import ci.kossovo.loyer_core_api.events.financial.PaymentReceivedEvent;
 import ci.kossovo.loyer_core_api.events.locations.ContratCreatedEvent;
 import ci.kossovo.loyer_core_api.events.raiting.TenantNoteEvent;
+
+import org.axonframework.config.ProcessingGroup;
 import org.axonframework.eventhandling.EventHandler;
 import org.springframework.stereotype.Component;
 
 @Component
+@ProcessingGroup("tenancy-projections")
 public class HistoriqueLocataireProjection {
 
   private final HistoriqueLocataireRepository repository;
