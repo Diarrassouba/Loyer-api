@@ -19,7 +19,10 @@ import org.axonframework.modelling.command.AggregateIdentifier;
 import org.axonframework.modelling.command.AggregateLifecycle;
 import org.axonframework.spring.stereotype.Aggregate;
 
-@Aggregate
+@Aggregate(
+    snapshotTriggerDefinition =
+        "monDeclencheurSnapshot") // On indique à Axon d'utiliser notre déclencheur de snapshot
+                                  // personnalisé
 public class CompteFinancierContratAggregate {
 
   @AggregateIdentifier private String contratId;

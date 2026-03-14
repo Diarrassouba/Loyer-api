@@ -4,10 +4,12 @@ import ci.kossovo.financial_command_service.projection.models.ContratActifView;
 import ci.kossovo.financial_command_service.projection.repositories.ContratActifRepository;
 import ci.kossovo.loyer_core_api.events.financial.FinancialAccountCloturedEvent;
 import ci.kossovo.loyer_core_api.events.financial.FinancialAccountInitialisedEvent;
+import org.axonframework.config.ProcessingGroup;
 import org.axonframework.eventhandling.EventHandler;
 import org.springframework.stereotype.Component;
 
 @Component
+@ProcessingGroup("financial-projections")
 public class ContratActifProjection {
 
   private final ContratActifRepository repository;
