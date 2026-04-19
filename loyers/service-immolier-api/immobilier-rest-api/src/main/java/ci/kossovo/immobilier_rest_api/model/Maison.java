@@ -1,8 +1,11 @@
 package ci.kossovo.immobilier_rest_api.model;
 
+import ci.kossovo.loyer_core_api.enums.immobiliers.TypeMaison;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
@@ -27,6 +30,9 @@ public class Maison {
 
   @Column(nullable = false)
   private String ville;
+
+  @Enumerated(EnumType.STRING)
+  private TypeMaison type;
 
   private int anneeConstruction;
 

@@ -8,4 +8,5 @@ public record InitializeFinancialAccountCommand(
     @TargetAggregateIdentifier // Lie cette commande à une instance spécifique de l'agrégat
         String contratId,
     String locataireId,
+    String bienId,
     BigDecimal montantLoyerMensuel) {}

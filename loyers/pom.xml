@@ -13,7 +13,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.11</version>
+        <version>3.5.13</version>
         <relativePath />
         <!-- lookup parent from repository -->
     </parent>
@@ -36,7 +36,7 @@
         <url />
     </scm>
     <properties>
-        <java.version>21</java.version>
+        <java.version>25</java.version>
         <axon.version>4.13.0</axon.version>
         <org.mapstruct.version>1.6.3</org.mapstruct.version>
         <org.projectlombok.version>1.18.30</org.projectlombok.version>
@@ -47,10 +47,16 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
-        <dependency>
+        <!-- <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-mongodb</artifactId>
+        </dependency> 
+        <dependency>
+            <groupId>org.axonframework.extensions.mongo</groupId>
+            <artifactId>axon-mongo-spring-boot-starter</artifactId>
+            <version>4.9.0</version>           
         </dependency>
+        -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -80,11 +86,7 @@
             <version>${axon.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.axonframework.extensions.mongo</groupId>
-            <artifactId>axon-mongo-spring-boot-starter</artifactId>
-            <version>4.9.0</version>            <!-- Vérifiez la version compatible avec votre Axon 4.13.0 -->
-        </dependency>
+
 
         <dependency>
             <groupId>org.axonframework</groupId>
@@ -167,7 +169,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
                 <configuration>
+                    <release>${java.version}</release>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.mapstruct</groupId>

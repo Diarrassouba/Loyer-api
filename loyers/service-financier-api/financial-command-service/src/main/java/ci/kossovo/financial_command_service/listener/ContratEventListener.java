@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
-@ProcessingGroup("financial-projections")
+@ProcessingGroup("cmd-finance-listener-init")
 public class ContratEventListener {
 
   private static final Logger log = LoggerFactory.getLogger(ContratEventListener.class);
@@ -37,7 +37,7 @@ public class ContratEventListener {
 
     InitializeFinancialAccountCommand cmd =
         new InitializeFinancialAccountCommand(
-            evt.contratId(), evt.locataireId(), evt.montantLoyerMensuel());
+            evt.contratId(), evt.locataireId(), evt.bienId(), evt.montantLoyerMensuel());
 
     // Envoie la commande pour créer une nouvelle instance de l'agrégat.
     // 2. LOG CRUCIAL : Que se passe-t-il quand on envoie la commande ?

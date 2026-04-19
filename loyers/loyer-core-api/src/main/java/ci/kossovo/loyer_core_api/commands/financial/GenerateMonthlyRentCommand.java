@@ -11,4 +11,4 @@ public record GenerateMonthlyRentCommand(
     @TargetAggregateIdentifier String contratId,
     UUID loyerId, // ID unique pour cette instance de loyer
     YearMonth moisAnnee,
-    BigDecimal montant) {}
+    BigDecimal montantDut) {}

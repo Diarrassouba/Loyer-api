@@ -11,6 +11,7 @@ import ci.kossovo.loyer_core_api.events.financial.PaymentReceivedEvent;
 import ci.kossovo.loyer_core_api.events.financial.RentMonthlyGeneredEvent;
 import java.math.BigDecimal;
 import java.time.YearMonth;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.axonframework.commandhandling.CommandHandler;
@@ -22,15 +23,17 @@ import org.axonframework.spring.stereotype.Aggregate;
 @Aggregate(
     snapshotTriggerDefinition =
         "monDeclencheurSnapshot") // On indique à Axon d'utiliser notre déclencheur de snapshot
-                                  // personnalisé
+// personnalisé
 public class CompteFinancierContratAggregate {
 
   @AggregateIdentifier private String contratId;
 
   private String locataireId;
   private BigDecimal montantLoyerMensuelDeBase;
-  private BigDecimal soldeCourant; // Négatif = dette du locataire, Positif = avance du locataire
-  private Map<YearMonth, BigDecimal> loyersDus;
+  // Négatif = dette du locataire, Positif = avance du locataire
+  private BigDecimal soldeCourant = BigDecimal.ZERO;
+  // Clé : mois/année, Valeur : montant du loyer dû pour ce mois
+  private Map<YearMonth, BigDecimal> loyersDus ;
   private boolean actif;
 
   // Constructeur par défaut requis par Axon
@@ -47,7 +50,7 @@ public class CompteFinancierContratAggregate {
     // Publication de l'événement
     AggregateLifecycle.apply(
         new FinancialAccountInitialisedEvent(
-            cmd.contratId(), cmd.locataireId(), cmd.montantLoyerMensuel()));
+            cmd.contratId(), cmd.locataireId(), cmd.bienId(), cmd.montantLoyerMensuel()));
   }
 
   // 2. Gestionnaire de l'événement d'initialisation
@@ -56,8 +59,8 @@ public class CompteFinancierContratAggregate {
     this.contratId = evt.contratId();
     this.locataireId = evt.locataireId();
     this.montantLoyerMensuelDeBase = evt.montantLoyerMensuel();
-    this.soldeCourant = BigDecimal.ZERO;
-    this.loyersDus = Map.of(); // Initialisation d'une map vide
+    this.soldeCourant = BigDecimal.ZERO; // Au départ, le locataire n'a ni dette ni avance
+    this.loyersDus = new HashMap<>(); // Initialisation d'une map vide
     this.actif = true;
   }
 
@@ -76,8 +79,9 @@ public class CompteFinancierContratAggregate {
         new RentMonthlyGeneredEvent(
             cmd.contratId(),
             UUID.randomUUID(), // Génère un ID unique pour ce loyer
+            this.locataireId,
             cmd.moisAnnee(),
-            cmd.montant()));
+            cmd.montantDut()));
   }
 
   // 4. Gestionnaire de l'événement de génération de loyer
@@ -86,7 +90,9 @@ public class CompteFinancierContratAggregate {
     this.loyersDus.put(evt.moisAnnee(), evt.montantDu());
 
     // La dette du locataire augmente du montant du loyer généré
+    // this.soldeCourant = this.soldeCourant.subtract(evt.montantDu());
     this.soldeCourant = this.soldeCourant.subtract(evt.montantDu());
+    // On prend le solde calculé dans l'événement pour garantir la cohérence
   }
 
   // 5. Gestionnaire de la commande de paiement

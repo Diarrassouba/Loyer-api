@@ -21,6 +21,7 @@ import ci.kossovo.immobilier_rest_api.repositories.DepenseRepository;
 import ci.kossovo.immobilier_rest_api.repositories.MaisonRepository;
 import ci.kossovo.immobilier_rest_api.services.impl.MaisonServiceImpl;
 import ci.kossovo.loyer_core_api.enums.immobiliers.TypeDepense;
+import ci.kossovo.loyer_core_api.enums.immobiliers.TypeMaison;
 import ci.kossovo.loyer_core_api.events.immobiliers.DepenseRecordedEvent;
 import ci.kossovo.loyer_core_api.events.immobiliers.MaisonCreatedEvent;
 import ci.kossovo.loyer_core_api.events.immobiliers.MaisonDeletedEvent;
@@ -42,18 +43,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class MaisonServiceImplTest {
-  @Mock
-  private MaisonRepository maisonRepository;
-  @Mock
-  private ImmobilierMapper mapper;
-  @Mock
-  private AppartementRepository appartementRepository;
-  @Mock
-  private DepenseRepository depenseRepository;
-  @Mock
-  private EventGateway eventGateway;
-  @InjectMocks
-  private MaisonServiceImpl maisonService;
+  @Mock private MaisonRepository maisonRepository;
+  @Mock private ImmobilierMapper mapper;
+  @Mock private AppartementRepository appartementRepository;
+  @Mock private DepenseRepository depenseRepository;
+  @Mock private EventGateway eventGateway;
+  @InjectMocks private MaisonServiceImpl maisonService;
 
   // Ajoutez ici vos méthodes de test
 
@@ -66,7 +61,9 @@ public class MaisonServiceImplTest {
     // 4. Vérifiez que les interactions avec les dépendances sont correctes
 
     // ARRANGE (Préparation)
-    MaisonRequestDTO requestDTO = new MaisonRequestDTO("123 ilot de Test", "123 ilot de Test", "Abidjan", 2023);
+    MaisonRequestDTO requestDTO =
+        new MaisonRequestDTO(
+            "123 ilot de Test", "123 ilot de Test", "Abidjan", TypeMaison.MAISON, 2023);
 
     Maison maisonToSave = new Maison();
     maisonToSave.setLot("123 ilot de Test");
@@ -76,8 +73,15 @@ public class MaisonServiceImplTest {
     savedMaison.setId("maison-uuid-123");
     savedMaison.setLot("123 ilot de Test");
     savedMaison.setQuartier("Yopougon");
-    MaisonResponseDTO expectedResponse = new MaisonResponseDTO("maison-uuid-123", "123 ilot de Test", "Yopougon",
-        "Abidjan", 2023, null);
+    MaisonResponseDTO expectedResponse =
+        new MaisonResponseDTO(
+            "maison-uuid-123",
+            "123 ilot de Test",
+            "Yopougon",
+            "Abidjan",
+            TypeMaison.MAISON,
+            2023,
+            null);
 
     // Définir le comportement des mocks
     when(mapper.toMaison(requestDTO)).thenReturn(maisonToSave);
@@ -104,7 +108,8 @@ public class MaisonServiceImplTest {
     when(maisonRepository.findById(nonExistentId)).thenReturn(Optional.empty());
 
     // ACT & ASSERT
-    assertThatThrownBy(() -> maisonService.findMaisonById(nonExistentId)).isInstanceOf(MaisonNotFoundException.class)
+    assertThatThrownBy(() -> maisonService.findMaisonById(nonExistentId))
+        .isInstanceOf(MaisonNotFoundException.class)
         .hasMessageContaining("Maison non trouvée avec l'ID: " + nonExistentId);
 
     // Vérifier qu'aucune autre interaction n'a eu lieu
@@ -115,7 +120,8 @@ public class MaisonServiceImplTest {
   void updateMaison_shouldUpdateAndPublishEvent_whenMaisonExists() {
     // ARRANGE
     String maisonId = "maison-existant-id";
-    MaisonRequestDTO requestDTO = new MaisonRequestDTO("Nouveau lot", "Yopougon", "Nouvelleville", 2024);
+    MaisonRequestDTO requestDTO =
+        new MaisonRequestDTO("Nouveau lot", "Yopougon", "Nouvelleville", TypeMaison.MAISON, 2024);
 
     Maison maisonExistante = new Maison();
     maisonExistante.setId(maisonId);
@@ -125,12 +131,14 @@ public class MaisonServiceImplTest {
     maisonMiseAJour.setId(maisonId);
     maisonMiseAJour.setLot("Nouveau lot");
 
-    MaisonResponseDTO expectedResponse = new MaisonResponseDTO(maisonId, "Nouveau lot", "Yopougon", "Nouvelleville",
-        2024, null);
+    MaisonResponseDTO expectedResponse =
+        new MaisonResponseDTO(
+            maisonId, "Nouveau lot", "Yopougon", "Nouvelleville", TypeMaison.MAISON, 2024, null);
 
     // Définir le comportement des mocks
     when(maisonRepository.findById(maisonId)).thenReturn(Optional.of(maisonExistante));
-    when(maisonRepository.save(any(Maison.class))).thenReturn(maisonMiseAJour); // On peut être plus précis si besoin
+    when(maisonRepository.save(any(Maison.class)))
+        .thenReturn(maisonMiseAJour); // On peut être plus précis si besoin
     when(mapper.toMaisonResponseDTO(maisonMiseAJour)).thenReturn(expectedResponse);
 
     // ACT
@@ -152,7 +160,8 @@ public class MaisonServiceImplTest {
   void updateMaison_shouldThrowException_whenMaisonNotFound() {
     // ARRANGE
     String nonExistentId = "id-qui-n-existe-pas";
-    MaisonRequestDTO requestDTO = new MaisonRequestDTO("Nouveau lot", "Yopougon", "Nouvelleville", 2024);
+    MaisonRequestDTO requestDTO =
+        new MaisonRequestDTO("Nouveau lot", "Yopougon", "Nouvelleville", TypeMaison.MAISON, 2024);
     when(maisonRepository.findById(nonExistentId)).thenReturn(Optional.empty());
 
     // ACT & ASSERT
@@ -171,7 +180,8 @@ public class MaisonServiceImplTest {
     when(maisonRepository.existsById(maisonId)).thenReturn(true);
 
     // Créer un "ArgumentCaptor" pour capturer l'événement qui sera publié
-    ArgumentCaptor<MaisonDeletedEvent> eventCaptor = ArgumentCaptor.forClass(MaisonDeletedEvent.class);
+    ArgumentCaptor<MaisonDeletedEvent> eventCaptor =
+        ArgumentCaptor.forClass(MaisonDeletedEvent.class);
 
     // ACT
     maisonService.deleteMaison(maisonId);
@@ -195,7 +205,8 @@ public class MaisonServiceImplTest {
     when(maisonRepository.existsById(nonExistentId)).thenReturn(false);
 
     // ACT & ASSERT
-    assertThatThrownBy(() -> maisonService.deleteMaison(nonExistentId)).isInstanceOf(MaisonNotFoundException.class);
+    assertThatThrownBy(() -> maisonService.deleteMaison(nonExistentId))
+        .isInstanceOf(MaisonNotFoundException.class);
 
     // Vérifier qu'aucune suppression ou publication n'a eu lieu
     verify(maisonRepository, never()).deleteById(any());
@@ -209,8 +220,14 @@ public class MaisonServiceImplTest {
   void createDepense_shouldSucceed_forMaison() {
     // ARRANGE
     String maisonId = "maison-id-123";
-    DepenseRequestDTO requestDTO = new DepenseRequestDTO(new BigDecimal("500"), "Réparation toiture", LocalDate.now(),
-        TypeDepense.REPARATION, maisonId, null);
+    DepenseRequestDTO requestDTO =
+        new DepenseRequestDTO(
+            new BigDecimal("500"),
+            "Réparation toiture",
+            LocalDate.now(),
+            TypeDepense.REPARATION,
+            maisonId,
+            null);
 
     Depense depenseToSave = new Depense();
     Depense savedDepense = new Depense();
@@ -222,7 +239,8 @@ public class MaisonServiceImplTest {
     when(mapper.toDepense(requestDTO)).thenReturn(depenseToSave);
     when(depenseRepository.save(depenseToSave)).thenReturn(savedDepense);
 
-    ArgumentCaptor<DepenseRecordedEvent> eventCaptor = ArgumentCaptor.forClass(DepenseRecordedEvent.class);
+    ArgumentCaptor<DepenseRecordedEvent> eventCaptor =
+        ArgumentCaptor.forClass(DepenseRecordedEvent.class);
 
     // ACT
     maisonService.createDepense(requestDTO);
@@ -242,8 +260,14 @@ public class MaisonServiceImplTest {
   void createDepense_shouldSucceed_forAppartement() {
     // ARRANGE
     String appartementId = "apt-id-456";
-    DepenseRequestDTO requestDTO = new DepenseRequestDTO(new BigDecimal("120"), "Changement robinet", LocalDate.now(),
-        TypeDepense.REPARATION, null, appartementId);
+    DepenseRequestDTO requestDTO =
+        new DepenseRequestDTO(
+            new BigDecimal("120"),
+            "Changement robinet",
+            LocalDate.now(),
+            TypeDepense.REPARATION,
+            null,
+            appartementId);
 
     when(appartementRepository.existsById(appartementId)).thenReturn(true);
     // ... Mocks pour mapper et save ...
@@ -262,12 +286,15 @@ public class MaisonServiceImplTest {
   @DisplayName("createDepense - Doit lever IllegalArgumentException si liée aux deux biens")
   void createDepense_shouldFail_whenLinkedToBoth() {
     // ARRANGE
-    DepenseRequestDTO requestDTO = new DepenseRequestDTO(BigDecimal.ONE, "Test", LocalDate.now(), TypeDepense.DIVERS,
-        "maison-id", "apt-id");
+    DepenseRequestDTO requestDTO =
+        new DepenseRequestDTO(
+            BigDecimal.ONE, "Test", LocalDate.now(), TypeDepense.DIVERS, "maison-id", "apt-id");
 
     // ACT & ASSERT
-    assertThatThrownBy(() -> maisonService.createDepense(requestDTO)).isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Une dépense ne peut pas être associée à la fois à une maison et un appartement.");
+    assertThatThrownBy(() -> maisonService.createDepense(requestDTO))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Une dépense ne peut pas être associée à la fois à une maison et un appartement.");
 
     verifyNoInteractions(depenseRepository, eventGateway);
   }
@@ -276,11 +303,13 @@ public class MaisonServiceImplTest {
   @DisplayName("createDepense - Doit lever IllegalArgumentException si liée à aucun bien")
   void createDepense_shouldFail_whenLinkedToNone() {
     // ARRANGE
-    DepenseRequestDTO requestDTO = new DepenseRequestDTO(BigDecimal.ONE, "Test", LocalDate.now(), TypeDepense.DIVERS,
-        null, null);
+    DepenseRequestDTO requestDTO =
+        new DepenseRequestDTO(
+            BigDecimal.ONE, "Test", LocalDate.now(), TypeDepense.DIVERS, null, null);
 
     // ACT & ASSERT
-    assertThatThrownBy(() -> maisonService.createDepense(requestDTO)).isInstanceOf(IllegalArgumentException.class)
+    assertThatThrownBy(() -> maisonService.createDepense(requestDTO))
+        .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Une dépense doit être associée à une maison ou un appartement.");
   }
 
@@ -289,12 +318,14 @@ public class MaisonServiceImplTest {
   void createDepense_shouldFail_whenMaisonNotFound() {
     // ARRANGE
     String nonExistentMaisonId = "maison-inexistante-id";
-    DepenseRequestDTO requestDTO = new DepenseRequestDTO(BigDecimal.TEN, "Test", LocalDate.now(), TypeDepense.DIVERS,
-        nonExistentMaisonId, null);
+    DepenseRequestDTO requestDTO =
+        new DepenseRequestDTO(
+            BigDecimal.TEN, "Test", LocalDate.now(), TypeDepense.DIVERS, nonExistentMaisonId, null);
     when(maisonRepository.existsById(nonExistentMaisonId)).thenReturn(false);
 
     // ACT & ASSERT
-    assertThatThrownBy(() -> maisonService.createDepense(requestDTO)).isInstanceOf(MaisonNotFoundException.class)
+    assertThatThrownBy(() -> maisonService.createDepense(requestDTO))
+        .isInstanceOf(MaisonNotFoundException.class)
         .hasMessage("Maison non trouvée avec l'ID: " + nonExistentMaisonId);
   }
 
@@ -303,12 +334,19 @@ public class MaisonServiceImplTest {
   void createDepense_shouldFail_whenAppartementNotFound() {
     // ARRANGE
     String nonExistentAppartementId = "apt-inexistant-id";
-    DepenseRequestDTO requestDTO = new DepenseRequestDTO(BigDecimal.TEN, "Test", LocalDate.now(), TypeDepense.DIVERS,
-        null, nonExistentAppartementId);
+    DepenseRequestDTO requestDTO =
+        new DepenseRequestDTO(
+            BigDecimal.TEN,
+            "Test",
+            LocalDate.now(),
+            TypeDepense.DIVERS,
+            null,
+            nonExistentAppartementId);
     when(appartementRepository.existsById(nonExistentAppartementId)).thenReturn(false);
 
     // ACT & ASSERT
-    assertThatThrownBy(() -> maisonService.createDepense(requestDTO)).isInstanceOf(MaisonNotFoundException.class)
+    assertThatThrownBy(() -> maisonService.createDepense(requestDTO))
+        .isInstanceOf(MaisonNotFoundException.class)
         .hasMessage("Appartement non trouvé avec l'ID: " + nonExistentAppartementId);
   }
 

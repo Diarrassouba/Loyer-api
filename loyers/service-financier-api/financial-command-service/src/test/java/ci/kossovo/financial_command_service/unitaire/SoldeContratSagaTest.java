@@ -59,7 +59,7 @@ public class SoldeContratSagaTest {
                 contratId, locataireId, "apt1", "APT", BigDecimal.TEN, LocalDate.now()))
         .andThenAPublished(
             new RentMonthlyGeneredEvent(
-                contratId, UUID.randomUUID(), YearMonth.now(), new BigDecimal("500")))
+                contratId, UUID.randomUUID(), locataireId, YearMonth.now(), new BigDecimal("500")))
         // Avancer le temps de 8 jours pour dépasser la deadline de 7 jours
         .whenTimeElapses(Duration.ofDays(8))
         .expectActiveSagas(1)

@@ -6,10 +6,12 @@ import ci.kossovo.raiting_service.projections.models.ContratValideView;
 import ci.kossovo.raiting_service.projections.models.LocataireValideView;
 import ci.kossovo.raiting_service.projections.repositories.ContratValideRepository;
 import ci.kossovo.raiting_service.projections.repositories.LocataireValideRepository;
+import org.axonframework.config.ProcessingGroup;
 import org.axonframework.eventhandling.EventHandler;
 import org.springframework.stereotype.Component;
 
 @Component
+@ProcessingGroup("validation-projections")
 public class ValidationProjection {
 
   private final ContratValideRepository contratRepository;
