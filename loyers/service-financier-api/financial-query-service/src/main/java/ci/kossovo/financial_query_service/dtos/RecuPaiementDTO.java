@@ -18,4 +18,5 @@ public record RecuPaiementDTO(
     String contactLocataire,
 
     // Infos Bien
+    String typeBien,
     String descriptionBien) {}

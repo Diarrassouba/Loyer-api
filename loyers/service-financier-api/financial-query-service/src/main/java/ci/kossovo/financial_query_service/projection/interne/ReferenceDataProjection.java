@@ -4,7 +4,7 @@ import ci.kossovo.financial_query_service.projection.interne.model.BienImmobilie
 import ci.kossovo.financial_query_service.projection.interne.model.LocataireViewDocument;
 import ci.kossovo.financial_query_service.projection.interne.repository.BienImmobilierViewRepository;
 import ci.kossovo.financial_query_service.projection.interne.repository.LocataireViewRepository;
-import ci.kossovo.loyer_core_api.events.immobiliers.AppartementAddedEvent;
+import ci.kossovo.loyer_core_api.events.immobiliers.AppartementAddedToMaisonEvent;
 import ci.kossovo.loyer_core_api.events.immobiliers.AppartementUpdatedEvent;
 import ci.kossovo.loyer_core_api.events.immobiliers.MaisonCreatedEvent;
 import ci.kossovo.loyer_core_api.events.immobiliers.MaisonUpdatedEvent;
@@ -43,17 +43,32 @@ public class ReferenceDataProjection {
 
   @EventHandler
   public void on(MaisonCreatedEvent evt) {
-    String description = "Maison - " + evt.lot() + ", " + " " + evt.quartier() + ", " + evt.ville();
-    bienRepo.save(new BienImmobilierViewDocument(evt.maisonId(), description, evt.type()));
+    // String description = "Maison - " + evt.lot() + ", " + " " + evt.quartier() + ", " +
+    // evt.ville();
+    String adresseComplete = evt.lot() + ", " + " " + evt.quartier() + ", " + evt.ville();
+    bienRepo.save(
+        new BienImmobilierViewDocument(
+            evt.maisonId(),
+            formatType(evt.typeBatiment()), // Une méthode utilitaire pour formater joliment
+            null,
+            adresseComplete));
   }
 
   @EventHandler
-  public void on(AppartementAddedEvent evt) {
-    // Idéalement, cet événement devrait aussi contenir l'adresse de la maison parente.
-    // Si ce n'est pas le cas, on se contente de la référence de l'appartement.
-    String description = "Appartement (" + evt.reference() + ") - " + evt.lot();
-    // Si vous avez l'adresse : "Appartement (" + evt.reference() + ") - " + evt.adresseMaison()
-    bienRepo.save(new BienImmobilierViewDocument(evt.appartementId(), description, evt.type()));
+  public void on(AppartementAddedToMaisonEvent evt) {
+
+    // Ex: Adresse = "Lot 4B, 12 Rue de la Paix"
+    String adresseComplete = "Lot " + evt.reference();
+    if (evt.adresseBatiment() != null) {
+      adresseComplete += ", " + evt.adresseBatiment();
+    }
+    bienRepo.save(
+        new BienImmobilierViewDocument(
+            evt.appartementId(),
+            formatType(evt.typeLot()),
+            // Idéalement, il faudrait aussi récupérer le typeBatiment de  la maison parente.
+            formatType(evt.typeBatiment()),
+            adresseComplete));
   }
 
   @EventHandler
@@ -63,10 +78,9 @@ public class ReferenceDataProjection {
         .findById(evt.maisonId())
         .ifPresent(
             existingDoc -> {
-              String description =
-                  "Maison - " + evt.lot() + ", " + " " + evt.quartier() + ", " + evt.ville();
-              existingDoc.setDescriptionComplete(description);
-              existingDoc.setType(evt.type().toString());
+              String adresseComplete = evt.lot() + ", " + " " + evt.quartier() + ", " + evt.ville();
+              existingDoc.setAdresseComplete(adresseComplete);
+              existingDoc.setTypePrecis(formatType(evt.typeBatiment()));
               bienRepo.save(existingDoc);
             });
   }
@@ -78,10 +92,20 @@ public class ReferenceDataProjection {
         .findById(evt.appartementId())
         .ifPresent(
             existingDoc -> {
-              String description = "Appartement (" + evt.reference() + ") - " + evt.lot();
-              existingDoc.setDescriptionComplete(description);
-              existingDoc.setType(evt.type().toString());
+              String adresseComplete = "Lot " + evt.reference();
+              if (evt.adresseBatiment() != null) {
+                adresseComplete += ", " + evt.adresseBatiment();
+              }
+              existingDoc.setAdresseComplete(adresseComplete);
+              existingDoc.setTypePrecis(formatType(evt.typeBatiment()));
               bienRepo.save(existingDoc);
             });
+  }
+
+  // Méthode utilitaire pour un affichage propre (ex: "DEUX_PIECES" -> "Deux pièces")
+  private String formatType(String enumType) {
+    if (enumType == null) return "Non défini";
+    String lower = enumType.toLowerCase().replace("_", " ");
+    return lower.substring(0, 1).toUpperCase() + lower.substring(1);
   }
 }

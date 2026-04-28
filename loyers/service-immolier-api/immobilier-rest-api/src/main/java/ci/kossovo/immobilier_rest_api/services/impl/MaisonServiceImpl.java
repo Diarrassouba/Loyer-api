@@ -68,7 +68,7 @@ public class MaisonServiceImpl implements MaisonService {
             maison.getLot(),
             maison.getVille(),
             maison.getQuartier(),
-            maison.getType().toString(),
+            maison.getTypeBatiment().toString(),
             maison.getAnneeConstruction()));
 
     // 4. Mapper l'entité sauvegardée en DTO de réponse
@@ -110,7 +110,7 @@ public class MaisonServiceImpl implements MaisonService {
             updatedMaison.getLot(),
             updatedMaison.getVille(),
             updatedMaison.getQuartier(),
-            updatedMaison.getType(),
+            updatedMaison.getTypeBatiment().toString(),
             updatedMaison.getAnneeConstruction()));
 
     return mapper.toMaisonResponseDTO(updatedMaison);
@@ -137,6 +137,7 @@ public class MaisonServiceImpl implements MaisonService {
                 () -> new MaisonNotFoundException("Maison non trouvée avec l'ID: " + maisonId));
 
     // Mapper le DTO en entité
+
     Appartement appartement = mapper.toAppartement(appartementDTO);
     maison.addAppartement(appartement);
 
@@ -145,10 +146,16 @@ public class MaisonServiceImpl implements MaisonService {
 
     // La sauvegarde de la maison persiste aussi l'appartement
     maisonRepository.save(maison);
-
+    String adresseBatiment =
+        maison.getLot() + ", " + " " + maison.getQuartier() + ", " + maison.getVille();
     eventGateway.publish(
         new AppartementAddedToMaisonEvent(
-            appartement.getId(), appartement.getReference(), appartement.getReference()));
+            appartement.getId(),
+            maisonId,
+            appartement.getReference(),
+            appartement.getTypeLot().toString(),
+            maison.getTypeBatiment().toString(),
+            adresseBatiment));
 
     // Mapper l'entité sauvegardée en DTO de réponse
     return mapper.toAppResponseDTO(appartement);
@@ -214,14 +221,17 @@ public class MaisonServiceImpl implements MaisonService {
     appartementRepository.save(appartement);
 
     // Publier un événement AppartementMiseAJourEvenement si nécessaire
+    String adresseBatiment =
+        maison.getLot() + ", " + " " + maison.getQuartier() + ", " + maison.getVille();
     eventGateway.publish(
         new AppartementUpdatedEvent(
             appartement.getId(),
             appartement.getReference(),
             maisonId,
-            appartementId,
-            appartement.getType().toString(),
-            appartement.getNombreDePieces()));
+            appartement.getTypeLot().toString(),
+            maison.getTypeBatiment().toString(),
+            appartement.getNombreDePieces(),
+            adresseBatiment));
 
     // Mapper l'entité sauvegardée en DTO de réponse
     return mapper.toAppResponseDTO(appartement);

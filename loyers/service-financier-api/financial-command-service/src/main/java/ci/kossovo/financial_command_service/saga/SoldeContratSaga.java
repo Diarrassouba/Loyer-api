@@ -26,6 +26,7 @@ public class SoldeContratSaga {
   @Autowired private transient EventGateway eventGateway;
 
   // --- État interne de la Saga (persisté par Axon) ---
+  private String contratId;
   private String locataireId;
   private BigDecimal soldeCourant;
   private LocalDate dateDerniereDette; // Date du premier loyer non soldé
@@ -37,6 +38,7 @@ public class SoldeContratSaga {
   public void on(ContratCreatedEvent evt) {
     System.out.println(
         "Saga [Contrat " + evt.contratId() + "]: Démarrage de la surveillance du solde.");
+    this.contratId = evt.contratId();
     this.locataireId = evt.locataireId();
     this.soldeCourant = BigDecimal.ZERO;
     // On planifie la première vérification
@@ -117,8 +119,9 @@ public class SoldeContratSaga {
 
   // --- Méthode utilitaire ---
   private void planifierProchaineVerification() {
-    // On planifie une vérification dans 7 jours.
-    this.deadlineId = deadlineManager.schedule(Duration.ofDays(7), "verificationSolde");
+    // On planifie une vérification dans 7 jours, en passant le contratId comme payload.
+    this.deadlineId =
+        deadlineManager.schedule(Duration.ofDays(7), "verificationSolde", this.contratId);
     System.out.println(
         "Saga: Prochaine vérification du solde planifiée dans 7 jours. ID: " + this.deadlineId);
   }

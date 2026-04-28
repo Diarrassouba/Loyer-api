@@ -18,9 +18,9 @@ import ci.kossovo.immobilier_rest_api.model.Maison;
 import ci.kossovo.immobilier_rest_api.repositories.AppartementRepository;
 import ci.kossovo.immobilier_rest_api.repositories.DepenseRepository;
 import ci.kossovo.immobilier_rest_api.repositories.MaisonRepository;
-import ci.kossovo.loyer_core_api.enums.immobiliers.TypeAppartement;
+import ci.kossovo.loyer_core_api.enums.immobiliers.TypeBatiment;
 import ci.kossovo.loyer_core_api.enums.immobiliers.TypeDepense;
-import ci.kossovo.loyer_core_api.enums.immobiliers.TypeMaison;
+import ci.kossovo.loyer_core_api.enums.immobiliers.TypeLot;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
@@ -84,7 +84,7 @@ public class MaisonControllerIntegrationTest {
   void createMaison_shouldReturn201Created() throws Exception {
     // Arrange
     MaisonRequestDTO requestDTO =
-        new MaisonRequestDTO("214 ilot 21 Attie", "Yopougon", "Abidjan", TypeMaison.VILLA, 2000);
+        new MaisonRequestDTO("214 ilot 21 Attie", "Yopougon", "Abidjan", TypeBatiment.VILLA, 2000);
 
     // Act & Assert
     mockMvc
@@ -134,8 +134,7 @@ public class MaisonControllerIntegrationTest {
     // 1. Il faut d'abord une maison existante pour y ajouter un appartement
     Maison maison =
         maisonRepository.save(createMaisonEntity("300 ilot 10 Riviera", "Cocody", "Abidjan"));
-    AppartementRequestDTO aptRequest =
-        new AppartementRequestDTO("APT 3B", TypeAppartement.VILLA, 2, 3);
+    AppartementRequestDTO aptRequest = new AppartementRequestDTO("APT 3B", TypeLot.STUDIO, 2, 3);
 
     // Act & Assert
     mockMvc
@@ -162,9 +161,9 @@ public class MaisonControllerIntegrationTest {
     // On utilise la méthode de l'API pour créer les appartements, testant ainsi les
     // deux endpoints en synergie
     createAppartementApiCall(
-        maison.getId(), new AppartementRequestDTO("APT 02", TypeAppartement.STUDIO, 0, 0));
+        maison.getId(), new AppartementRequestDTO("APT 02", TypeLot.STUDIO, 1, 2));
     createAppartementApiCall(
-        maison.getId(), new AppartementRequestDTO("P004", TypeAppartement.VILLA, 1, 2));
+        maison.getId(), new AppartementRequestDTO("P004", TypeLot.STUDIO, 1, 2));
 
     // Act & Assert
     mockMvc
@@ -186,7 +185,8 @@ public class MaisonControllerIntegrationTest {
         maisonRepository.save(createMaisonEntity("150 ilot 7 Selmer", "Yopougon", "Abidjan"));
     String maisonId = maison.getId();
     MaisonRequestDTO requestDTO =
-        new MaisonRequestDTO("Nouveau lot", "Yopougon", "Nouvelleville", TypeMaison.MAISON, 2024);
+        new MaisonRequestDTO(
+            "Nouveau lot", "Yopougon", "Nouvelleville", TypeBatiment.COUR_COMMUNE, 2024);
 
     // ACT & ASSERT
     mockMvc
@@ -213,7 +213,8 @@ public class MaisonControllerIntegrationTest {
     // ARRANGE
     String nonExistentId = "id-qui-n-existe-pas";
     MaisonRequestDTO requestDTO =
-        new MaisonRequestDTO("Nouveau lot", "Yopougon", "Nouvelleville", TypeMaison.MAISON, 2024);
+        new MaisonRequestDTO(
+            "Nouveau lot", "Yopougon", "Nouvelleville", TypeBatiment.COUR_COMMUNE, 2024);
 
     // ACT & ASSERT
     mockMvc
@@ -271,8 +272,7 @@ public class MaisonControllerIntegrationTest {
   void createAppartement_shouldReturn404WhenMaisonNotFound() throws Exception {
     // ARRANGE
     String nonExistentMaisonId = "maison-id-inexistante";
-    AppartementRequestDTO aptRequest =
-        new AppartementRequestDTO("APT 3B", TypeAppartement.VILLA, 2, 3);
+    AppartementRequestDTO aptRequest = new AppartementRequestDTO("APT 3B", TypeLot.STUDIO, 2, 3);
 
     // ACT & ASSERT
     mockMvc

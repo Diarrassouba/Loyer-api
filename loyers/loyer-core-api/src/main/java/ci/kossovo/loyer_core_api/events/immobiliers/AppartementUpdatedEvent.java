@@ -4,6 +4,7 @@ public record AppartementUpdatedEvent(
     String appartementId,
     String reference,
     String maisonId,
-    String lot,
-    String type,
-    int nombreDePieces) {}
+    String typeLot,
+    String typeBatiment,
+    int nombreDePieces,
+    String adresseBatiment) {}

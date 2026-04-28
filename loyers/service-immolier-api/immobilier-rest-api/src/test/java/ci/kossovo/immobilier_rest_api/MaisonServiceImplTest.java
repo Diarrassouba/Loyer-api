@@ -20,8 +20,8 @@ import ci.kossovo.immobilier_rest_api.repositories.AppartementRepository;
 import ci.kossovo.immobilier_rest_api.repositories.DepenseRepository;
 import ci.kossovo.immobilier_rest_api.repositories.MaisonRepository;
 import ci.kossovo.immobilier_rest_api.services.impl.MaisonServiceImpl;
+import ci.kossovo.loyer_core_api.enums.immobiliers.TypeBatiment;
 import ci.kossovo.loyer_core_api.enums.immobiliers.TypeDepense;
-import ci.kossovo.loyer_core_api.enums.immobiliers.TypeMaison;
 import ci.kossovo.loyer_core_api.events.immobiliers.DepenseRecordedEvent;
 import ci.kossovo.loyer_core_api.events.immobiliers.MaisonCreatedEvent;
 import ci.kossovo.loyer_core_api.events.immobiliers.MaisonDeletedEvent;
@@ -63,23 +63,27 @@ public class MaisonServiceImplTest {
     // ARRANGE (Préparation)
     MaisonRequestDTO requestDTO =
         new MaisonRequestDTO(
-            "123 ilot de Test", "123 ilot de Test", "Abidjan", TypeMaison.MAISON, 2023);
+            "123 ilot de Test", "123 ilot de Test", "Abidjan", TypeBatiment.COUR_COMMUNE, 2023);
 
     Maison maisonToSave = new Maison();
     maisonToSave.setLot("123 ilot de Test");
     maisonToSave.setVille("123 ilot de Test");
     maisonToSave.setAnneeConstruction(2023);
+    maisonToSave.setTypeBatiment(TypeBatiment.COUR_COMMUNE);
     Maison savedMaison = new Maison(); // L'objet que le repo est censé retourner
     savedMaison.setId("maison-uuid-123");
     savedMaison.setLot("123 ilot de Test");
     savedMaison.setQuartier("Yopougon");
+    savedMaison.setVille("Abidjan");
+    savedMaison.setAnneeConstruction(2023);
+    savedMaison.setTypeBatiment(TypeBatiment.COUR_COMMUNE);
     MaisonResponseDTO expectedResponse =
         new MaisonResponseDTO(
             "maison-uuid-123",
             "123 ilot de Test",
             "Yopougon",
             "Abidjan",
-            TypeMaison.MAISON,
+            TypeBatiment.COUR_COMMUNE,
             2023,
             null);
 
@@ -121,19 +125,34 @@ public class MaisonServiceImplTest {
     // ARRANGE
     String maisonId = "maison-existant-id";
     MaisonRequestDTO requestDTO =
-        new MaisonRequestDTO("Nouveau lot", "Yopougon", "Nouvelleville", TypeMaison.MAISON, 2024);
+        new MaisonRequestDTO(
+            "Nouveau lot", "Yopougon", "Nouvelleville", TypeBatiment.COUR_COMMUNE, 2024);
 
     Maison maisonExistante = new Maison();
     maisonExistante.setId(maisonId);
     maisonExistante.setLot("Nouveau lot");
+    maisonExistante.setQuartier("Yopougon");
+    maisonExistante.setVille("Nouvelleville");
+    maisonExistante.setAnneeConstruction(2024);
+    maisonExistante.setTypeBatiment(TypeBatiment.COUR_COMMUNE);
 
     Maison maisonMiseAJour = new Maison();
     maisonMiseAJour.setId(maisonId);
     maisonMiseAJour.setLot("Nouveau lot");
+    maisonMiseAJour.setQuartier("Yopougon");
+    maisonMiseAJour.setVille("Nouvelleville");
+    maisonMiseAJour.setAnneeConstruction(2024);
+    maisonMiseAJour.setTypeBatiment(TypeBatiment.COUR_COMMUNE);
 
     MaisonResponseDTO expectedResponse =
         new MaisonResponseDTO(
-            maisonId, "Nouveau lot", "Yopougon", "Nouvelleville", TypeMaison.MAISON, 2024, null);
+            maisonId,
+            "Nouveau lot",
+            "Yopougon",
+            "Nouvelleville",
+            TypeBatiment.COUR_COMMUNE,
+            2024,
+            null);
 
     // Définir le comportement des mocks
     when(maisonRepository.findById(maisonId)).thenReturn(Optional.of(maisonExistante));
@@ -161,7 +180,8 @@ public class MaisonServiceImplTest {
     // ARRANGE
     String nonExistentId = "id-qui-n-existe-pas";
     MaisonRequestDTO requestDTO =
-        new MaisonRequestDTO("Nouveau lot", "Yopougon", "Nouvelleville", TypeMaison.MAISON, 2024);
+        new MaisonRequestDTO(
+            "Nouveau lot", "Yopougon", "Nouvelleville", TypeBatiment.COUR_COMMUNE, 2024);
     when(maisonRepository.findById(nonExistentId)).thenReturn(Optional.empty());
 
     // ACT & ASSERT
@@ -370,23 +390,4 @@ public class MaisonServiceImplTest {
     // configuré
     assertThat(result).isNotNull();
   }
-
-  // @Test
-  // void createDepense_shouldThrowException_whenMaisonNotFound() {
-  // // ARRANGE
-  // String maisonId = "maison-inexistante-id";
-  // DepenseRequestDTO requestDTO = new DepenseRequestDTO(
-  // 150.0, "Remplacement du robinet de la cuisine", "2024-01-18", "REPARATION",
-  // maisonId,null);
-  // when(maisonRepository.findById(maisonId)).thenReturn(Optional.empty());
-
-  // // ACT & ASSERT
-  // assertThatThrownBy(() ->
-  // maisonService.createDepense(requestDTO)).isInstanceOf(MaisonNotFoundException.class)
-  // .hasMessageContaining("Maison non trouvée avec l'ID: " + maisonId);
-
-  // // Vérifier qu'aucune autre interaction n'a eu lieu
-  // verifyNoInteractions(mapper, eventGateway, appartementRepository);
-  // }
-
 }

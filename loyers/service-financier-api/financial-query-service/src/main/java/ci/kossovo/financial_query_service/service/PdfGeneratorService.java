@@ -77,6 +77,7 @@ public class PdfGeneratorService {
       // Lignes du tableau
       ajouterLigneTableau(tableDetails, "Locataire :", recu.nomLocataire(), true);
       ajouterLigneTableau(tableDetails, "Contact :", recu.contactLocataire(), false); // NOUVEAU
+      ajouterLigneTableau(tableDetails, "Type de bien :", recu.typeBien(), false);
       ajouterLigneTableau(tableDetails, "Bien loué :", recu.descriptionBien(), false);
 
       // Ligne vide pour aérer
@@ -191,17 +192,30 @@ public class PdfGeneratorService {
       ajouterCelluleTableau(tableDetails, "Contrat N° :", true);
       ajouterCelluleTableau(tableDetails, recu.contratId(), false);
 
-      // Ligne 2 : Informations de Contact et Description du Bien
+      /* // Ligne 2 : Informations de Contact et Description du Bien
       ajouterCelluleTableau(tableDetails, "Contact :", true);
       ajouterCelluleTableau(tableDetails, recu.contactLocataire(), false);
       ajouterCelluleTableau(tableDetails, "Bien loué :", true);
+      ajouterCelluleTableau(tableDetails, recu.descriptionBien(), false); */
+
+      // Ligne 2 : Contact
+      ajouterCelluleTableau(tableDetails, "Contact :", true);
+      ajouterCelluleTableau(tableDetails, recu.contactLocataire(), false);
+
+      // Cellules vides pour compléter la ligne 2 si on veut aligner le bien en dessous
+      tableDetails.addCell(new Cell(1, 2).setBorder(Border.NO_BORDER));
+
+      // Ligne 3 : Type de Bien et Description (NOUVEAU FORMATAGE)
+      ajouterCelluleTableau(tableDetails, "Type de bien :", true);
+      ajouterCelluleTableau(tableDetails, recu.typeBien(), false); // <-- AFFICHAGE DU TYPE DE BIEN
+      ajouterCelluleTableau(tableDetails, "Détails :", true);
       ajouterCelluleTableau(tableDetails, recu.descriptionBien(), false);
 
-      // Ligne vide pour aérer (fusionne les 4 colonnes)
+      // Ligne vide pour aérer
       Cell emptyRow = new Cell(1, 4).setBorder(Border.NO_BORDER).setMinHeight(10f);
       tableDetails.addCell(emptyRow);
 
-      // Ligne 3 : Informations Financières
+      // Ligne 4 : Informations Financières
       ajouterCelluleTableau(tableDetails, "Montant payé :", true);
 
       // Mise en évidence du montant payé

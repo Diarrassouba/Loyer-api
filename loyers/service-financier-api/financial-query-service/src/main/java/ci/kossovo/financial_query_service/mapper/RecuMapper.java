@@ -30,11 +30,12 @@ public interface RecuMapper {
       target = "contactLocataire",
       source = "locataireDoc.contactInfo",
       defaultValue = "Non renseigné")
+  // On utilise une méthode customisée (qualifiedByName) pour gérer la logique
+  @Mapping(target = "typeBien", source = "bienDoc", qualifiedByName = "formatTypeComplet")
   @Mapping(
       target = "descriptionBien",
-      source = "bienDoc.descriptionComplete",
-      defaultValue = "Bien inconnu")
-
+      source = "bienDoc.adresseComplete",
+      defaultValue = "Adresse non disponible")
   // Mappings calculés
   @Mapping(target = "montantEnLettres", source = "recuDoc.montantPaye")
   // MapStruct utilisera MontantEnLettresService automatiquement
@@ -67,5 +68,19 @@ public interface RecuMapper {
     } else {
       return "Avance de : " + soldeApresPaiement.intValue() + " FCFA";
     }
+  }
+
+  // La méthode customisée qui combine les infos
+  @Named("formatTypeComplet")
+  default String formatTypeComplet(BienImmobilierViewDocument bienDoc) {
+    if (bienDoc == null) return "Inconnu";
+
+    String type = bienDoc.getTypePrecis(); // Ex: "Studio" ou "Villa"
+
+    // Si c'est un lot dans un bâtiment, on l'affiche (ex: "Studio (dans Immeuble)")
+    if (bienDoc.getTypeBatimentParent() != null && !bienDoc.getTypeBatimentParent().isEmpty()) {
+      type += " (dans " + bienDoc.getTypeBatimentParent() + ")";
+    }
+    return type;
   }
 }

@@ -80,27 +80,6 @@ public class CompteFinancierContratAggregateTest {
   }
 
   @Test
-  @DisplayName("Doit générer un loyer et déduire le montant du solde")
-  void shouldGenerateRentAndUpdateBalance() {
-    String contratId = "c1";
-    String locataireId = "l1";
-    String bienId = "b1";
-    UUID loyerId = UUID.randomUUID();
-    YearMonth mois = YearMonth.of(2023, 10);
-
-    fixture
-        .given(
-            new FinancialAccountInitialisedEvent(
-                contratId, locataireId, bienId, new BigDecimal("800")))
-        .when(new GenerateMonthlyRentCommand(contratId, loyerId, mois, new BigDecimal("800")))
-        .expectSuccessfulHandlerExecution()
-        // Le solde initial était 0, on génère un loyer de 800, le nouveau solde est -800
-        .expectEvents(
-            new RentMonthlyGeneredEvent(
-                contratId, loyerId, locataireId, mois, new BigDecimal("800")));
-  }
-
-  @Test
   @DisplayName("Doit générer un loyer mensuel et mettre à jour le solde")
   void shouldGenerateMonthlyRentAndUpdateBalance() {
     String contratId = "contrat-1";
@@ -133,8 +112,8 @@ public class CompteFinancierContratAggregateTest {
 
     fixture
         .given(
-            new InitializeFinancialAccountCommand(
-                contratId, bienId, locataireId, new BigDecimal("700")),
+            new FinancialAccountInitialisedEvent(
+                contratId, locataireId, bienId, new BigDecimal("700")),
             new RentMonthlyGeneredEvent(
                 contratId, UUID.randomUUID(), locataireId, YearMonth.now(), new BigDecimal("700")))
         .when(

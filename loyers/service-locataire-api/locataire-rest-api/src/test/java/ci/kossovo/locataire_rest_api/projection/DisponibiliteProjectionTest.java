@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import ci.kossovo.locataire_rest_api.models.DisponibiliteBien;
 import ci.kossovo.locataire_rest_api.repositories.DisponibiliteBienRepository;
-import ci.kossovo.loyer_core_api.enums.immobiliers.TypeMaison;
+import ci.kossovo.loyer_core_api.enums.immobiliers.TypeBatiment;
 import ci.kossovo.loyer_core_api.events.immobiliers.MaisonCreatedEvent;
 import ci.kossovo.loyer_core_api.events.locations.ContratCreatedEvent;
 import ci.kossovo.loyer_core_api.events.locations.ContratFinishedEvent;
@@ -37,7 +37,8 @@ public class DisponibiliteProjectionTest {
 
     // Création des événements qui simulent le flux métier
     MaisonCreatedEvent maisonCreee =
-        new MaisonCreatedEvent(maisonId, "Adresse", "Abidjan", contratId,TypeMaison.COUREE.toString(), 2010  );
+        new MaisonCreatedEvent(
+            maisonId, "Adresse", "Abidjan", contratId, TypeBatiment.COUREE.toString(), 2010);
     ContratCreatedEvent contratCree =
         new ContratCreatedEvent(
             contratId, "loc-1", maisonId, "MAISON", BigDecimal.TEN, LocalDate.now());

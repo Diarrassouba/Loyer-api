@@ -1,6 +1,6 @@
 package ci.kossovo.immobilier_rest_api.model;
 
-import ci.kossovo.loyer_core_api.enums.immobiliers.TypeMaison;
+import ci.kossovo.loyer_core_api.enums.immobiliers.TypeBatiment;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -32,7 +32,7 @@ public class Maison {
   private String ville;
 
   @Enumerated(EnumType.STRING)
-  private TypeMaison type;
+  private TypeBatiment typeBatiment;
 
   private int anneeConstruction;
 

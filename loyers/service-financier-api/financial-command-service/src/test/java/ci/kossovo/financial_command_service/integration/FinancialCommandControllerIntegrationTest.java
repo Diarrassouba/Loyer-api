@@ -64,7 +64,8 @@ public class FinancialCommandControllerIntegrationTest {
 
   // --- TESTS ---
 
-  @Test
+  @SuppressWarnings("null")
+@Test
   @DisplayName("POST /api/command/finance/contrats/{id}/paiements - Succès (202 Accepted)")
   void enregistrerPaiement_shouldAcceptCommandAndReturn202() throws Exception {
     // Arrange
@@ -103,7 +104,8 @@ public class FinancialCommandControllerIntegrationTest {
         .isNotNull(); // Vérifie que le contrôleur a bien généré un UUID
   }
 
-  @Test
+  @SuppressWarnings("null")
+@Test
   @DisplayName(
       "POST /api/command/finance/contrats/{id}/paiements - Échec de validation (400 Bad Request)")
   void enregistrerPaiement_shouldReturn400_whenMontantIsNegative() throws Exception {

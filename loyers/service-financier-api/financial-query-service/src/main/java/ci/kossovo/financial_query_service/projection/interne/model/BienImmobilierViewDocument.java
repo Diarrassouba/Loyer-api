@@ -12,7 +12,12 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document(collection = "vue_biens_immobiliers")
 public class BienImmobilierViewDocument {
   @Id private String bienId;
-  // Ex: "Maison - 123 Rue de la Paix, Paris" ou "Apt 4B - 123 Rue..."
-  private String descriptionComplete;
-  private String type; // Ex: "Maison", "Appartement", "Studio"
+
+  // Le type précis ("VILLA", "STUDIO", etc.)
+  private String typePrecis;
+
+  // Si c'est un lot, on garde une trace de son bâtiment parent (ex: "dans l'Immeuble Le Concorde")
+  private String typeBatimentParent;
+
+  private String adresseComplete;
 }

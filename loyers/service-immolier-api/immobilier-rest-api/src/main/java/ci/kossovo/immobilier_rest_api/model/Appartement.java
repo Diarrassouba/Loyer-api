@@ -1,6 +1,6 @@
 package ci.kossovo.immobilier_rest_api.model;
 
-import ci.kossovo.loyer_core_api.enums.immobiliers.TypeAppartement;
+import ci.kossovo.loyer_core_api.enums.immobiliers.TypeLot;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -24,7 +24,12 @@ public class Appartement {
   private String reference;
 
   @Enumerated(EnumType.STRING)
-  private TypeAppartement type;
+  private TypeLot typeLot;
+
+  /*  @Column(nullable = false)
+  private String typeBatiment; */
+
+  // private String adresseBatiment;
 
   private int etage;
   private int nombreDePieces;
