@@ -1,27 +1,35 @@
 package ci.kossovo.locataire_rest_api.models;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
-
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import lombok.Data;
 
 @Entity
 @Data
 public class ContratLocation {
 
-     @Id
-    private String id = UUID.randomUUID().toString();
-    private LocalDate dateDebut;
-    private LocalDate dateFin;
-    private BigDecimal montantLoyerBase;
-    private boolean actif = true;
-    
-    // Identifiants externes
-    private String locataireId;
-    private String appartementId; // Soit l'un...
-    private String maisonId;      // ...soit l'autre
+  @Id private String id = UUID.randomUUID().toString();
 
+  // Référence au locataire
+  private String locataireId;
+
+  // --- Gestion de la hiérarchie du bien ---
+  // En base de données, on stocke explicitement si c'est une maison ou un appartement.
+  // L'un des deux sera toujours null.
+  private String maisonId;
+  private String appartementId;
+
+  // Utile pour des requêtes simples (ex: "MAISON" ou "APPARTEMENT")
+  private String typeBien;
+
+  // --- Détails financiers et temporels ---
+  private BigDecimal montantLoyerBase;
+  private LocalDate dateDebut;
+  private LocalDate dateFin;
+
+  // Indique si le contrat est en cours
+  private boolean actif = true;
 }

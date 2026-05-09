@@ -2,8 +2,9 @@ package ci.kossovo.loyer_core_api.events.immobiliers;
 
 public record AppartementAddedToMaisonEvent(
     String appartementId,
-    String maisonId,
     String reference,
+    String maisonId,
     String typeLot,
     String typeBatiment,
+    int nombreDePieces,
     String adresseBatiment) {}

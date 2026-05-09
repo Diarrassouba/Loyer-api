@@ -148,13 +148,15 @@ public class MaisonServiceImpl implements MaisonService {
     maisonRepository.save(maison);
     String adresseBatiment =
         maison.getLot() + ", " + " " + maison.getQuartier() + ", " + maison.getVille();
+
     eventGateway.publish(
         new AppartementAddedToMaisonEvent(
             appartement.getId(),
-            maisonId,
             appartement.getReference(),
+            maisonId,
             appartement.getTypeLot().toString(),
             maison.getTypeBatiment().toString(),
+            appartement.getNombreDePieces(),
             adresseBatiment));
 
     // Mapper l'entité sauvegardée en DTO de réponse

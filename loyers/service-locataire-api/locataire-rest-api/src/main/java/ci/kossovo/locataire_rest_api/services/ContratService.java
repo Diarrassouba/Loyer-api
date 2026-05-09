@@ -1,27 +1,31 @@
 package ci.kossovo.locataire_rest_api.services;
 
-import java.util.List;
-
 import ci.kossovo.locataire_rest_api.dtos.ContratRequestDTO;
 import ci.kossovo.locataire_rest_api.dtos.ContratResponseDTO;
 import ci.kossovo.locataire_rest_api.dtos.LocataireRequestDTO;
 import ci.kossovo.locataire_rest_api.dtos.LocataireResponseDto;
+import ci.kossovo.locataire_rest_api.models.MaisonDispoView;
 
-public interface ContratService {
+import java.util.List;
 
-    // --- Locataire ---
-    LocataireResponseDto createLocataire(LocataireRequestDTO locataireDTO);
+public interface 
+ContratService {
 
-    LocataireResponseDto findLocataireById(String id);
+  // --- Locataire ---
+  LocataireResponseDto createLocataire(LocataireRequestDTO locataireDTO);
 
-    List<LocataireResponseDto> findAllLocataires();
+  LocataireResponseDto findLocataireById(String id);
 
-    LocataireResponseDto updateLocataire(String id, LocataireRequestDTO locataireDTO);
-    // --- Contrat ---
-    ContratResponseDTO createContrat(ContratRequestDTO contratDTO);
+  List<LocataireResponseDto> findAllLocataires();
 
-    ContratResponseDTO findContratById(String id);
+  LocataireResponseDto updateLocataire(String id, LocataireRequestDTO locataireDTO);
 
-    ContratResponseDTO terminerContrat(String id);
+  // --- Contrat ---
+  ContratResponseDTO createContrat(ContratRequestDTO contratDTO);
 
+  ContratResponseDTO findContratById(String id);
+
+  ContratResponseDTO terminerContrat(String id);
+
+  List<MaisonDispoView> getMaisonAll();
 }

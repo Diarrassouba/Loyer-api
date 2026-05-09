@@ -9,4 +9,5 @@ public record RentMonthlyGeneredEvent(
     UUID loyerId,
     String locataireId,
     YearMonth moisAnnee,
-    BigDecimal montantDu) {}
+    BigDecimal montantDu,
+    BigDecimal nouveauSolde) {}

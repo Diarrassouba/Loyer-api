@@ -49,7 +49,9 @@ public class SoldeContratSaga {
   @SagaEventHandler(associationProperty = "contratId")
   public void on(RentMonthlyGeneredEvent evt) {
     System.out.println("Saga [Contrat " + evt.contratId() + "]: Loyer généré. Solde mis à jour.");
-    this.soldeCourant = this.soldeCourant.subtract(evt.montantDu());
+
+    this.soldeCourant =
+        evt.nouveauSolde(); // On prend le solde calculé dans l'événement pour garantir la cohérence
 
     // Si c'est la première fois que le solde devient négatif, on note la date.
     if (this.soldeCourant.compareTo(BigDecimal.ZERO) < 0 && dateDerniereDette == null) {
@@ -119,10 +121,10 @@ public class SoldeContratSaga {
 
   // --- Méthode utilitaire ---
   private void planifierProchaineVerification() {
-    // On planifie une vérification dans 7 jours, en passant le contratId comme payload.
+    // On planifie une vérification dans 1 jour , en passant le contratId comme payload.
     this.deadlineId =
-        deadlineManager.schedule(Duration.ofDays(7), "verificationSolde", this.contratId);
+        deadlineManager.schedule(Duration.ofDays(1), "verificationSolde", this.contratId);
     System.out.println(
-        "Saga: Prochaine vérification du solde planifiée dans 7 jours. ID: " + this.deadlineId);
+        "Saga: Prochaine vérification du solde planifiée dans 1 jour . ID: " + this.deadlineId);
   }
 }

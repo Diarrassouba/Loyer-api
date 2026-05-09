@@ -1,180 +1,271 @@
 package ci.kossovo.locataire_rest_api.services.impl;
 
-import java.time.LocalDate;
-import java.util.List;
-
-import org.axonframework.eventhandling.gateway.EventGateway;
-import org.springframework.stereotype.Service;
-
 import ci.kossovo.locataire_rest_api.dtos.ContratRequestDTO;
 import ci.kossovo.locataire_rest_api.dtos.ContratResponseDTO;
-import ci.kossovo.locataire_rest_api.dtos.LocataireResponseDto;
 import ci.kossovo.locataire_rest_api.dtos.LocataireRequestDTO;
+import ci.kossovo.locataire_rest_api.dtos.LocataireResponseDto;
 import ci.kossovo.locataire_rest_api.mappers.TenancyMapper;
+import ci.kossovo.locataire_rest_api.models.AppartementDispoView;
 import ci.kossovo.locataire_rest_api.models.ContratLocation;
-import ci.kossovo.locataire_rest_api.models.DisponibiliteBien;
 import ci.kossovo.locataire_rest_api.models.Locataire;
+import ci.kossovo.locataire_rest_api.models.MaisonDispoView;
+import ci.kossovo.locataire_rest_api.repositories.AppartementDispoRepository;
 import ci.kossovo.locataire_rest_api.repositories.ContratRepository;
-import ci.kossovo.locataire_rest_api.repositories.DisponibiliteBienRepository;
 import ci.kossovo.locataire_rest_api.repositories.HistoriqueLocataireRepository;
 import ci.kossovo.locataire_rest_api.repositories.LocataireRepository;
+import ci.kossovo.locataire_rest_api.repositories.MaisonDispoRepository;
 import ci.kossovo.locataire_rest_api.services.ContratService;
 import ci.kossovo.loyer_core_api.events.locations.ContratCreatedEvent;
 import ci.kossovo.loyer_core_api.events.locations.ContratFinishedEvent;
 import ci.kossovo.loyer_core_api.events.locations.LocataireCreatedEvent;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Predicate;
+import org.axonframework.eventhandling.gateway.EventGateway;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
 public class ContratServiceImpl implements ContratService {
 
-    private final ContratRepository contratRepository;
-    private final LocataireRepository locataireRepository;
-    private final DisponibiliteBienRepository disponibiliteRepository;
-    private final HistoriqueLocataireRepository historiqueRepository;
-    private final TenancyMapper mapper;
-    private final EventGateway eventGateway;
+  private final ContratRepository contratRepository;
+  private final MaisonDispoRepository maisonDispoRepo;
+  private final AppartementDispoRepository appartementDispoRepo;
+  private final HistoriqueLocataireRepository historiqueRepo;
+  private final LocataireRepository locataireRepository;
+  private final TenancyMapper mapper;
+  private final EventGateway eventGateway;
 
-    // Injection de toutes les dépendances nécessaires
-    public ContratServiceImpl(ContratRepository contratRepository, LocataireRepository locataireRepository,
-            DisponibiliteBienRepository disponibiliteRepository, HistoriqueLocataireRepository historiqueRepository,
-            TenancyMapper mapper, EventGateway eventGateway) {
-        this.contratRepository = contratRepository;
-        this.locataireRepository = locataireRepository;
-        this.disponibiliteRepository = disponibiliteRepository;
-        this.historiqueRepository = historiqueRepository;
-        this.mapper = mapper;
-        this.eventGateway = eventGateway;
-    }
+  public ContratServiceImpl(
+      ContratRepository contratRepository,
+      MaisonDispoRepository maisonDispoRepo,
+      AppartementDispoRepository appartementDispoRepo,
+      HistoriqueLocataireRepository historiqueRepo,
+      LocataireRepository locataireRepository,
+      TenancyMapper mapper,
+      EventGateway eventGateway) {
+    this.contratRepository = contratRepository;
+    this.maisonDispoRepo = maisonDispoRepo;
+    this.appartementDispoRepo = appartementDispoRepo;
+    this.historiqueRepo = historiqueRepo;
+    this.locataireRepository = locataireRepository;
+    this.mapper = mapper;
+    this.eventGateway = eventGateway;
+  }
 
-    @Override
-    public ContratResponseDTO createContrat(ContratRequestDTO contratDTO) {
+  @Override
+  public ContratResponseDTO createContrat(ContratRequestDTO requestDTO) {
 
-        // --- VALIDATION MÉTIER COMPLEXE ---
-        // 1. Valider qu'un seul ID de bien est fourni
+    // 1. Validations Métier (Exécutées via des pipelines fonctionnels)
+    validerCoherenceIds(requestDTO);
 
-        String bienId = validateAndGetBienId(contratDTO);
+    // Si maisonId est présent, lance la validation Maison
+    Optional.ofNullable(requestDTO.maisonId()).ifPresent(this::validerDisponibiliteMaison);
 
-        // 2. Vérifier la disponibilité du bien (via notre projection locale)
-        checkDisponibilite(bienId);
+    // Si appartementId est présent, lance la validation Appartement
+    Optional.ofNullable(requestDTO.appartementId())
+        .ifPresent(this::validerDisponibiliteAppartement);
 
-        // 3. Vérifier l'historique du locataire (via notre projection locale)
-        checkHistoriqueLocataire(contratDTO.locataireId());
+    // Valide l'historique du locataire
+    Optional.ofNullable(requestDTO.locataireId()).ifPresent(this::validerHistoriqueLocataire);
 
-        // --- EXÉCUTION ---
-        ContratLocation contrat = mapper.toContratLocation(contratDTO);
-        ContratLocation savedContrat = contratRepository.save(contrat);
+    // 2. Détermination des valeurs dynamiques (Sans if/else)
+    String typeBien =
+        Optional.ofNullable(requestDTO.maisonId()).map(id -> "MAISON").orElse("APPARTEMENT");
 
-        // Publication de l'événement
-        String typeBien = contratDTO.maisonId() != null ? "MAISON" : "APPARTEMENT";
-        eventGateway.publish(new ContratCreatedEvent(savedContrat.getId(), savedContrat.getLocataireId(), bienId,
-                typeBien, savedContrat.getMontantLoyerBase(), savedContrat.getDateDebut()));
+    String bienId = Optional.ofNullable(requestDTO.maisonId()).orElse(requestDTO.appartementId());
 
-        return mapper.toContratResponseDTO(savedContrat);
-    }
+    // 3. Persistance
+    ContratLocation contrat = mapper.toContratLocation(requestDTO);
+    contrat.setTypeBien(typeBien);
+    ContratLocation savedContrat = contratRepository.save(contrat);
 
-    @Override
-    public ContratResponseDTO terminerContrat(String id) {
-        ContratLocation contrat = contratRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Contrat non trouvé: " + id));
+    // 4. Publication de l'événement
+    eventGateway.publish(
+        new ContratCreatedEvent(
+            savedContrat.getId(),
+            savedContrat.getLocataireId(),
+            bienId,
+            typeBien,
+            savedContrat.getMontantLoyerBase(),
+            savedContrat.getDateDebut()));
 
-        if (!contrat.isActif())
-            throw new IllegalStateException("Le contrat est déjà terminé.");
+    return mapper.toContratResponseDTO(savedContrat);
+  }
 
-        contrat.setActif(false);
-        contrat.setDateFin(LocalDate.now());
-        ContratLocation savedContrat = contratRepository.save(contrat);
+  @Override
+  public ContratResponseDTO terminerContrat(String id) {
+    ContratLocation contrat =
+        contratRepository
+            .findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Contrat non trouvé: " + id));
 
-        String bienId = savedContrat.getMaisonId() != null ? savedContrat.getMaisonId()
-                : savedContrat.getAppartementId();
-        eventGateway.publish(new ContratFinishedEvent(savedContrat.getId(), savedContrat.getLocataireId(), bienId,
-                savedContrat.getDateFin()));
+    // Remplacement du if(!contrat.isActif()) par Optional.filter
+    Optional.of(contrat)
+        .filter(Predicate.not(ContratLocation::isActif))
+        .ifPresent(
+            c -> {
+              throw new IllegalStateException("Le contrat est déjà terminé.");
+            });
 
-        return mapper.toContratResponseDTO(savedContrat);
-    }
+    contrat.setActif(false);
+    contrat.setDateFin(LocalDate.now());
+    ContratLocation savedContrat = contratRepository.save(contrat);
 
-    @Override
-    public ContratResponseDTO findContratById(String id) {
-        ContratLocation contrat = contratRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Contrat non trouvé avec l'ID: " + id));
-        return mapper.toContratResponseDTO(contrat);
-    }
+    String bienId =
+        Optional.ofNullable(savedContrat.getMaisonId()).orElse(savedContrat.getAppartementId());
 
-    // --- Implémentations pour Locataire et autres finders ---
+    eventGateway.publish(
+        new ContratFinishedEvent(
+            savedContrat.getId(),
+            savedContrat.getLocataireId(),
+            bienId,
+            savedContrat.getTypeBien(),
+            savedContrat.getDateFin()));
 
-    @Override
-    public LocataireResponseDto createLocataire(LocataireRequestDTO locataireRequestDTO) {
-        Locataire locataire = mapper.toLocataire(locataireRequestDTO);
+    return mapper.toContratResponseDTO(savedContrat);
+  }
 
-        // On pourrait publier un LocataireCreeEvent si d'autres services s'y
-        // intéressaient
+  @Override
+  public ContratResponseDTO findContratById(String id) {
+    ContratLocation contrat =
+        contratRepository
+            .findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Contrat non trouvé avec l'ID: " + id));
+    return mapper.toContratResponseDTO(contrat);
+  }
 
-        Locataire savedLocataire = locataireRepository.save(locataire);
-        eventGateway.publish(new LocataireCreatedEvent(savedLocataire.getId(), savedLocataire.getNom(),
-                savedLocataire.getPrenom(), savedLocataire.getEmail(), savedLocataire.getTelephone()));
+  @Override
+  public LocataireResponseDto createLocataire(LocataireRequestDTO locataireRequestDTO) {
+    Locataire locataire = mapper.toLocataire(locataireRequestDTO);
 
-        return mapper.toLocataireDTO(savedLocataire);
-    }
+    // On pourrait publier un LocataireCreeEvent si d'autres services s'y
+    // intéressaient
 
-    @Override
-    public LocataireResponseDto findLocataireById(String id) {
-        Locataire locataire = locataireRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Locataire non trouvé avec l'ID: " + id));
-        return mapper.toLocataireDTO(locataire);
-    }
+    Locataire savedLocataire = locataireRepository.save(locataire);
+    eventGateway.publish(
+        new LocataireCreatedEvent(
+            savedLocataire.getId(),
+            savedLocataire.getNom(),
+            savedLocataire.getPrenom(),
+            savedLocataire.getEmail(),
+            savedLocataire.getTelephone()));
 
-    @Override
-    public List<LocataireResponseDto> findAllLocataires() {
-        List<Locataire> locataires = locataireRepository.findAll();
-        return mapper.toLocataireDTOs(locataires);
-    }
+    return mapper.toLocataireResponseDto(savedLocataire);
+  }
 
-    @Override
-    public LocataireResponseDto updateLocataire(String id, LocataireRequestDTO locataireRequestDto) {
-        Locataire existingLocataire = locataireRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Locataire non trouvé avec l'ID: " + id));
+  @Override
+  public LocataireResponseDto findLocataireById(String id) {
+    Locataire locataire =
+        locataireRepository
+            .findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Locataire non trouvé: " + id));
+    return mapper.toLocataireResponseDto(locataire);
+  }
 
-        // Mettre à jour les champs pertinents
-        existingLocataire.setNom(locataireRequestDto.nom());
-        existingLocataire.setPrenom(locataireRequestDto.prenom());
-        existingLocataire.setEmail(locataireRequestDto.email());
-        existingLocataire.setTelephone(locataireRequestDto.telephone());
+  @Override
+  public List<LocataireResponseDto> findAllLocataires() {
 
-        Locataire updatedLocataire = locataireRepository.save(existingLocataire);
-        return mapper.toLocataireDTO(updatedLocataire);
-    }
+    List<Locataire> locataires = locataireRepository.findAll();
+    return mapper.toLocataireResponseDtoList(locataires);
+  }
 
-    // --- Méthodes privées de validation ---
-    private String validateAndGetBienId(ContratRequestDTO dto) {
-        if (dto.maisonId() != null && dto.appartementId() != null) {
-            throw new IllegalArgumentException(
-                    "Un contrat ne peut concerner qu'une maison OU un appartement, pas les deux.");
-        }
-        String bienId = dto.maisonId() != null ? dto.maisonId() : dto.appartementId();
-        if (bienId == null) {
-            throw new IllegalArgumentException("Un ID de maison ou d'appartement est requis.");
-        }
-        return bienId;
-    }
+  @Override
+  public LocataireResponseDto updateLocataire(String id, LocataireRequestDTO locataireDTO) {
+    Locataire existingLocataire =
+        locataireRepository
+            .findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Locataire non trouvé: " + id));
 
-    private void checkDisponibilite(String bienId) {
-        disponibiliteRepository.findById(bienId).ifPresent(bien -> {
-            if (bien.getStatut() == DisponibiliteBien.Statut.LOUE) {
-                throw new IllegalStateException("Le bien immobilier " + bienId + " est déjà loué.");
-            }
-        });
-    }
+    // MapStruct peut mettre à jour un objet existant en utilisant le même DTO
 
-    private void checkHistoriqueLocataire(String locataireId) {
-        historiqueRepository.findById(locataireId).ifPresent(historique -> {
-            if (historique.getNombreRetardsPaiement() > 3) {
-                throw new IllegalStateException("Le locataire a un historique de paiement insatisfaisant.");
-            }
-            if (historique.getScoreMoyenGeneral() > 0 && historique.getScoreMoyenGeneral() < 2.5) {
-                throw new IllegalStateException("Le locataire a un score de comportement insuffisant.");
-            }
-        });
-    }
+    Locataire updatedLocataire = mapper.toLocataire(locataireDTO, existingLocataire);
 
+    Locataire savedLocataire = locataireRepository.save(updatedLocataire);
+    return mapper.toLocataireResponseDto(savedLocataire);
+  }
+
+  @Override
+  public List<MaisonDispoView> getMaisonAll() {
+
+    return maisonDispoRepo.findAll();
+  }
+
+  // ===================================================================
+  // MÉTHODES DE VALIDATION PRIVÉES (Pipelines Fonctionnels)
+  // ===================================================================
+
+  private void validerCoherenceIds(ContratRequestDTO dto) {
+    // Rejeter si les DEUX IDs sont présents (maison ET appartement)
+    Optional.ofNullable(dto.maisonId())
+        .flatMap(mId -> Optional.ofNullable(dto.appartementId()))
+        .ifPresent(
+            both -> {
+              throw new IllegalArgumentException(
+                  "Un contrat ne peut concerner une maison ET un appartement.");
+            });
+
+    // Rejeter si AUCUN ID n'est présent
+    Optional.ofNullable(dto.maisonId())
+        .or(() -> Optional.ofNullable(dto.appartementId()))
+        .orElseThrow(
+            () -> new IllegalArgumentException("Un ID de maison ou d'appartement est requis."));
+  }
+
+  private void validerDisponibiliteMaison(String maisonId) {
+    MaisonDispoView maison =
+        maisonDispoRepo
+            .findById(maisonId)
+            .orElseThrow(() -> new EntityNotFoundException("Maison introuvable"));
+
+    // Remplacement du "if (!maison.estDisponible...)"
+    Optional.of(maison)
+        .filter(Predicate.not(MaisonDispoView::estDisponiblePourLocationEntiere))
+        .ifPresent(
+            m -> {
+              throw new IllegalStateException(
+                  "Impossible. Maison déjà louée ou contenant des appartements occupés ("
+                      + m.getAppartementsLoues()
+                      + " loués).");
+            });
+  }
+
+  private void validerDisponibiliteAppartement(String appartementId) {
+    AppartementDispoView apt =
+        appartementDispoRepo
+            .findById(appartementId)
+            .orElseThrow(() -> new EntityNotFoundException("Appartement introuvable"));
+
+    // Remplacement du "if (apt.isLoue())"
+    Optional.of(apt)
+        .filter(AppartementDispoView::isLoue)
+        .ifPresent(
+            a -> {
+              throw new IllegalStateException("Cet appartement est déjà loué.");
+            });
+
+    // Remplacement de la vérification du parent
+    maisonDispoRepo
+        .findById(apt.getMaisonId())
+        .filter(MaisonDispoView::isLoueeEnEntier)
+        .ifPresent(
+            m -> {
+              throw new IllegalStateException(
+                  "La maison entière fait déjà l'objet d'un contrat global.");
+            });
+  }
+
+  private void validerHistoriqueLocataire(String locataireId) {
+    // Remplacement du "if (hist.getNombreRetards() >= 3)"
+    historiqueRepo
+        .findById(locataireId)
+        .filter(hist -> hist.getNombreRetardsPaiement() >= 3)
+        .ifPresent(
+            hist -> {
+              throw new IllegalStateException("Historique de paiement inacceptable.");
+            });
+  }
 }

@@ -33,7 +33,7 @@ public class CompteFinancierContratAggregate {
   // Négatif = dette du locataire, Positif = avance du locataire
   private BigDecimal soldeCourant = BigDecimal.ZERO;
   // Clé : mois/année, Valeur : montant du loyer dû pour ce mois
-  private Map<YearMonth, BigDecimal> loyersDus ;
+  private Map<YearMonth, BigDecimal> loyersDus;
   private boolean actif;
 
   // Constructeur par défaut requis par Axon
@@ -74,14 +74,20 @@ public class CompteFinancierContratAggregate {
     if (loyersDus.containsKey(cmd.moisAnnee())) {
       throw new IllegalStateException("Le loyer pour " + cmd.moisAnnee() + " a déjà été généré.");
     }
-
+    // 1. SÉCURITÉ : Si le solde est null, on l'initialise à ZERO.
+    if (this.soldeCourant == null) {
+      this.soldeCourant = BigDecimal.ZERO;
+    }
     AggregateLifecycle.apply(
         new RentMonthlyGeneredEvent(
             cmd.contratId(),
             UUID.randomUUID(), // Génère un ID unique pour ce loyer
             this.locataireId,
             cmd.moisAnnee(),
-            cmd.montantDut()));
+            cmd.montantDut(),
+            this.soldeCourant.subtract(
+                cmd.montantDut()) // Le nouveau solde après génération du loyer
+            ));
   }
 
   // 4. Gestionnaire de l'événement de génération de loyer
@@ -91,7 +97,8 @@ public class CompteFinancierContratAggregate {
 
     // La dette du locataire augmente du montant du loyer généré
     // this.soldeCourant = this.soldeCourant.subtract(evt.montantDu());
-    this.soldeCourant = this.soldeCourant.subtract(evt.montantDu());
+    this.soldeCourant = evt.nouveauSolde();
+    // On prend le solde calculé dans l'événement pour garantir la cohérence
     // On prend le solde calculé dans l'événement pour garantir la cohérence
   }
 
@@ -106,6 +113,10 @@ public class CompteFinancierContratAggregate {
     }
 
     // Calcul du nouveau solde
+    // 1. SÉCURITÉ : Si le solde est null, on l'initialise à ZERO.
+    if (this.soldeCourant == null) {
+      this.soldeCourant = BigDecimal.ZERO;
+    }
     BigDecimal nouveauSolde = this.soldeCourant.add(cmd.montant());
 
     AggregateLifecycle.apply(

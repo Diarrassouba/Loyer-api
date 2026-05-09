@@ -99,7 +99,7 @@ public class CompteFinancierContratAggregateTest {
         .expectSuccessfulHandlerExecution()
         .expectEvents(
             new RentMonthlyGeneredEvent(
-                contratId, loyerId, locataireId, YearMonth.now(), new BigDecimal("700")));
+                contratId, loyerId, locataireId, YearMonth.now(), new BigDecimal("700"), new BigDecimal("-700")));
   }
 
   @Test
@@ -115,7 +115,7 @@ public class CompteFinancierContratAggregateTest {
             new FinancialAccountInitialisedEvent(
                 contratId, locataireId, bienId, new BigDecimal("700")),
             new RentMonthlyGeneredEvent(
-                contratId, UUID.randomUUID(), locataireId, YearMonth.now(), new BigDecimal("700")))
+                contratId, UUID.randomUUID(), locataireId, YearMonth.now(), new BigDecimal("700"), new BigDecimal("-700")))
         .when(
             new RecordPaymentCommand(
                 contratId, paiementId, new BigDecimal("500"), LocalDate.now(), null))

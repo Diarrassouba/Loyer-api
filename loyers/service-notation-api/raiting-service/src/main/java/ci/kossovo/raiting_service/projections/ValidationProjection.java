@@ -11,7 +11,7 @@ import org.axonframework.eventhandling.EventHandler;
 import org.springframework.stereotype.Component;
 
 @Component
-@ProcessingGroup("validation-projections")
+@ProcessingGroup("raiting-projections")
 public class ValidationProjection {
 
   private final ContratValideRepository contratRepository;

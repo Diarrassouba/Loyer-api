@@ -5,6 +5,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>locataire-rest-api</module>
+        <module>tenancy-query-service</module>
     </modules>
     <parent>
         <groupId>ci.kossovo</groupId>

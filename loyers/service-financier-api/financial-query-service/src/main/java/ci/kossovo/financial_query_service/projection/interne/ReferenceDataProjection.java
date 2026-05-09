@@ -59,6 +59,7 @@ public class ReferenceDataProjection {
 
     // Ex: Adresse = "Lot 4B, 12 Rue de la Paix"
     String adresseComplete = "Lot " + evt.reference();
+
     if (evt.adresseBatiment() != null) {
       adresseComplete += ", " + evt.adresseBatiment();
     }

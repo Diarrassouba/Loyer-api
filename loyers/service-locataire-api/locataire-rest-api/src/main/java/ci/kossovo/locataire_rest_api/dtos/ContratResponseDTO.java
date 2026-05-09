@@ -5,13 +5,14 @@ import java.time.LocalDate;
 
 public record ContratResponseDTO(
     String id,
-    LocalDate dateDebut,
-    LocalDate dateFin,
-    BigDecimal montantLoyerBase,
-    boolean actif,
-    String locataireId,
-    String bienId, // On unifie la réponse pour plus de simplicité
-    String typeBien
-) {
 
-}
+    // L'identifiant unifié du bien loué (que ce soit une maison ou un appt)
+    String bienId,
+
+    // Indique si le 'bienId' pointe vers une MAISON ou un APPARTEMENT
+    String typeBien,
+    String locataireId,
+    BigDecimal montantLoyerBase,
+    LocalDate dateDebut,
+    LocalDate dateFin, // Sera null tant que le contrat est actif
+    boolean actif) {}

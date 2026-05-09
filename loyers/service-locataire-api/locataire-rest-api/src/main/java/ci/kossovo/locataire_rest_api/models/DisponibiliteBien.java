@@ -12,21 +12,23 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class DisponibiliteBien {
 
-    @Id
-    private String bienId;
+  @Id private String bienId;
 
-    @Enumerated(EnumType.STRING)
-    private Statut statut = Statut.DISPONIBLE;
+  @Enumerated(EnumType.STRING)
+  private Statut statut = Statut.DISPONIBLE;
 
-    // Pour savoir quel contrat occupe le bien
-    private String contratIdActif;
+  // Pour savoir quel contrat occupe le bien
+  private String contratIdActif;
+  private String parentId; // ID de la maison pour les appartements, null pour les maisons
+  private String typeBien; // "MAISON" ou "APPARTEMENT"
+  private String adresse; // Adresse complète du bien
 
-    public DisponibiliteBien(String bienId) {
-        this.bienId = bienId;
-    }
+  public DisponibiliteBien(String bienId) {
+    this.bienId = bienId;
+  }
 
-    public enum Statut {
-        DISPONIBLE, LOUE
-    }
-
+  public enum Statut {
+    DISPONIBLE,
+    LOUE
+  }
 }
