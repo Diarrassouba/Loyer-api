@@ -27,5 +27,5 @@ ContratService {
 
   ContratResponseDTO terminerContrat(String id);
 
-  List<MaisonDispoView> getMaisonAll();
+  // List<MaisonDispoView> getMaisonAll();
 }

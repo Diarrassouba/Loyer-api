@@ -31,7 +31,7 @@ public class CompteFinancierContratAggregate {
   private String locataireId;
   private BigDecimal montantLoyerMensuelDeBase;
   // Négatif = dette du locataire, Positif = avance du locataire
-  private BigDecimal soldeCourant = BigDecimal.ZERO;
+  private BigDecimal soldeCourant;
   // Clé : mois/année, Valeur : montant du loyer dû pour ce mois
   private Map<YearMonth, BigDecimal> loyersDus;
   private boolean actif;

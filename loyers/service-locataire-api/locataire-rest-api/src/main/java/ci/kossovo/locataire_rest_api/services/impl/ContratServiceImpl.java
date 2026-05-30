@@ -188,11 +188,11 @@ public class ContratServiceImpl implements ContratService {
     return mapper.toLocataireResponseDto(savedLocataire);
   }
 
-  @Override
-  public List<MaisonDispoView> getMaisonAll() {
+  // @Override
+  // public List<MaisonDispoView> getMaisonAll() {
 
-    return maisonDispoRepo.findAll();
-  }
+  //   return maisonDispoRepo.findAll();
+  // }
 
   // ===================================================================
   // MÉTHODES DE VALIDATION PRIVÉES (Pipelines Fonctionnels)

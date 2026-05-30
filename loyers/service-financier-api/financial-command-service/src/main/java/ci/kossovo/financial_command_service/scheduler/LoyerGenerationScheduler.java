@@ -21,9 +21,9 @@ public class LoyerGenerationScheduler {
     this.contratActifRepository = contratActifRepository;
   }
 
-  @Scheduled(cron = "0 0 1 1 * *") // Le 1er de chaque mois à 1h du matin
-  // @Scheduled(cron = "0 0 21 14 * *", zone = "GMT")
-  // @Scheduled(cron = "0 */20 * * * *", zone = "GMT")
+  // @Scheduled(cron = "0 0 1 1 * *") // Le 1er de chaque mois à 1h du matin
+  /// @Scheduled(cron = "0 0 21 14 * *", zone = "GMT")
+  @Scheduled(cron = "0 */40 * * * *", zone = "GMT")
   public void genererLoyersDuMois() {
     System.out.println("SCHEDULER: Démarrage de la génération des loyers pour " + YearMonth.now());
 

@@ -2,7 +2,6 @@ package ci.kossovo.locataire_rest_api.api;
 
 import ci.kossovo.locataire_rest_api.dtos.ContratRequestDTO;
 import ci.kossovo.locataire_rest_api.dtos.ContratResponseDTO;
-import ci.kossovo.locataire_rest_api.models.MaisonDispoView;
 import ci.kossovo.locataire_rest_api.services.ContratService;
 import ci.kossovo.loyer_core_api.dtos.ErrorResponseDTO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,7 +11,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -106,7 +104,7 @@ public class ContratController {
     return contratService.findContratById(id);
   }
 
-  @Operation(summary = "Récupère la liste de toutes les maisons avec leur disponibilité")
+  /*  @Operation(summary = "Récupère la liste de toutes les maisons avec leur disponibilité")
   @ApiResponses(
       value = {
         @ApiResponse(
@@ -127,5 +125,5 @@ public class ContratController {
   @GetMapping("maisons")
   public List<MaisonDispoView> getMaisonAll() {
     return contratService.getMaisonAll();
-  }
+  } */
 }
