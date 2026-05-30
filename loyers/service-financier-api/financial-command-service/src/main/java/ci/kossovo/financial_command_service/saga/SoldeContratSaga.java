@@ -9,6 +9,7 @@ import ci.kossovo.loyer_core_api.events.locations.ContratFinishedEvent;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
+import java.util.Objects;
 import org.axonframework.deadline.DeadlineManager;
 import org.axonframework.deadline.annotation.DeadlineHandler;
 import org.axonframework.eventhandling.gateway.EventGateway;
@@ -122,8 +123,10 @@ public class SoldeContratSaga {
   // --- Méthode utilitaire ---
   private void planifierProchaineVerification() {
     // On planifie une vérification dans 1 jour , en passant le contratId comme payload.
+    Duration delay = Duration.ofDays(1);
     this.deadlineId =
-        deadlineManager.schedule(Duration.ofDays(1), "verificationSolde", this.contratId);
+        deadlineManager.schedule(
+            Objects.requireNonNull(delay), "verificationSolde", this.contratId);
     System.out.println(
         "Saga: Prochaine vérification du solde planifiée dans 1 jour . ID: " + this.deadlineId);
   }
