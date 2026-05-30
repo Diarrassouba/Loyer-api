@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.axonframework.eventsourcing.eventstore.EventStore;
 import org.springframework.http.ResponseEntity;
@@ -56,7 +57,7 @@ public class FinancialCommandController {
 
   @Operation(summary = "Affiche les événements liés à un contratId (pour debug)")
   @GetMapping("/eventStore/{contratId}")
-  public Stream eventStore(@PathVariable String contratId) {
+  public Stream<?> eventStore(@PathVariable @Nonnull String contratId) {
     return eventStore.readEvents(contratId).asStream();
   }
 }
