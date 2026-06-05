@@ -9,12 +9,12 @@ import ci.kossovo.loyer_core_api.commands.financial.RecordPaymentCommand;
 import ci.kossovo.loyer_core_api.commands.financial.RestituerCautionCommand;
 import ci.kossovo.loyer_core_api.events.financial.CautionRestitueeEvent;
 import ci.kossovo.loyer_core_api.events.financial.CompteFinancierClotureEvent;
+import ci.kossovo.loyer_core_api.events.financial.DegatsFacturesEvent;
 import ci.kossovo.loyer_core_api.events.financial.FinancialAccountCloturedEvent;
 import ci.kossovo.loyer_core_api.events.financial.FinancialAccountInitialisedEvent;
 import ci.kossovo.loyer_core_api.events.financial.PaymentInAdvanceDetectEvent;
 import ci.kossovo.loyer_core_api.events.financial.PaymentReceivedEvent;
 import ci.kossovo.loyer_core_api.events.financial.RentMonthlyGeneredEvent;
-import ci.kossovo.loyer_core_api.events.raiting.DegatsFacturesEvent;
 
 import java.math.BigDecimal;
 import java.time.YearMonth;

@@ -8,9 +8,14 @@ import ci.kossovo.financial_query_service.projection.model.TransactionDocument;
 import ci.kossovo.financial_query_service.repository.RecuPaiementRepository;
 import ci.kossovo.financial_query_service.repository.SyntheseRepository;
 import ci.kossovo.financial_query_service.repository.TransactionRepository;
+import ci.kossovo.loyer_core_api.events.financial.CautionRestitueeEvent;
+import ci.kossovo.loyer_core_api.events.financial.CompteFinancierClotureEvent;
+import ci.kossovo.loyer_core_api.events.financial.DegatsFacturesEvent;
 import ci.kossovo.loyer_core_api.events.financial.FinancialAccountInitialisedEvent;
 import ci.kossovo.loyer_core_api.events.financial.PaymentReceivedEvent;
 import ci.kossovo.loyer_core_api.events.financial.RentMonthlyGeneredEvent;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import org.axonframework.config.ProcessingGroup;
@@ -120,5 +125,63 @@ public class QueryFinancialProjection {
     recu.setSoldeAvantPaiement(evt.soldeAvantPaiement());
     recu.setSoldeApresPaiement(evt.nouveauSolde());
     recuPaiementRepository.save(recu);
+  }
+
+  @EventHandler
+  public void on(CautionRestitueeEvent evt) {
+    // 1. Mettre à jour le solde
+    mettreAJourSoldeSynthese(evt.contratId(), evt.nouveauSolde());
+
+    // 2. Ajouter l'historique
+    TransactionDocument tx = new TransactionDocument();
+    tx.setTransactionId(UUID.randomUUID().toString());
+    tx.setContratId(evt.contratId());
+    tx.setDate(LocalDateTime.now());
+    tx.setDescription("Restitution du Dépôt de Garantie (Crédit Caution)");
+    tx.setType("RECONCILIATION");
+    tx.setMontant(evt.montantRestitue()); // Positif
+    tx.setSoldeApresTransaction(evt.nouveauSolde());
+    transactionRepository.save(tx);
+  }
+
+  @EventHandler
+  public void on(DegatsFacturesEvent evt) {
+    mettreAJourSoldeSynthese(evt.contratId(), evt.nouveauSolde());
+
+    TransactionDocument tx = new TransactionDocument();
+    tx.setTransactionId(UUID.randomUUID().toString());
+    tx.setContratId(evt.contratId());
+    tx.setDate(LocalDateTime.now());
+    tx.setDescription("Facturation Dégradations : " + evt.description());
+    tx.setType("DEPENSE");
+    tx.setMontant(evt.montantDegats().negate()); // Négatif
+    tx.setSoldeApresTransaction(evt.nouveauSolde());
+    transactionRepository.save(tx);
+  }
+
+  @EventHandler
+  public void on(CompteFinancierClotureEvent evt) {
+    mettreAJourSoldeSynthese(evt.contratId(), evt.nouveauSolde()); // Le solde devient 0
+
+    TransactionDocument tx = new TransactionDocument();
+    tx.setTransactionId(UUID.randomUUID().toString());
+    tx.setContratId(evt.contratId());
+    tx.setDate(LocalDateTime.now());
+    tx.setDescription("Remboursement du Solde Créditeur et Clôture de Compte");
+    tx.setType("REMBOURSEMENT");
+    tx.setMontant(evt.montantRembourse().negate()); // Négatif car l'agence rend l'argent physique
+    tx.setSoldeApresTransaction(evt.nouveauSolde()); // 0
+    transactionRepository.save(tx);
+  }
+
+  // METHODE utilitaire pour mettre à jour le solde dans la synthèse financière
+  private void mettreAJourSoldeSynthese(String contratId, BigDecimal nouveauSolde) {
+    syntheseFinanciereRepository
+        .findById(contratId)
+        .ifPresent(
+            synthese -> {
+              synthese.setSolde(nouveauSolde);
+              syntheseFinanciereRepository.save(synthese);
+            });
   }
 }

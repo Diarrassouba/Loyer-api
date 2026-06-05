@@ -3,6 +3,7 @@ package ci.kossovo.raiting_service.dtos;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import java.math.BigDecimal;
 
 public record CreerNotationRequest(
     @NotBlank String locataireId,
@@ -15,4 +16,6 @@ public record CreerNotationRequest(
     @Min(1) @Max(5) int scoreRespectVoisinage,
     @Min(1) @Max(5) int scoreRespectReglement,
     String commentaire,
-    @NotBlank String notePar) {}
+    @NotBlank String notePar,
+    BigDecimal coutReparations,
+    String descriptionDegats) {}

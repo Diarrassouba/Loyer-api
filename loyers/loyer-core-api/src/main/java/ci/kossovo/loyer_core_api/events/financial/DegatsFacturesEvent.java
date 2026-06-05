@@ -1,4 +1,4 @@
-package ci.kossovo.loyer_core_api.events.raiting;
+package ci.kossovo.loyer_core_api.events.financial;
 
 import java.math.BigDecimal;
 

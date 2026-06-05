@@ -1,5 +1,7 @@
 package ci.kossovo.financial_command_service.saga;
 
+import ci.kossovo.loyer_core_api.commands.financial.RestituerCautionCommand;
+import ci.kossovo.loyer_core_api.events.financial.CompteFinancierClotureEvent;
 import ci.kossovo.loyer_core_api.events.financial.LatePaymentCriticalEvent;
 import ci.kossovo.loyer_core_api.events.financial.PaymentReceivedEvent;
 import ci.kossovo.loyer_core_api.events.financial.PaymentReminderRequiredEvent;
@@ -10,6 +12,7 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.Objects;
+import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.axonframework.deadline.DeadlineManager;
 import org.axonframework.deadline.annotation.DeadlineHandler;
 import org.axonframework.eventhandling.gateway.EventGateway;
@@ -25,6 +28,7 @@ public class SoldeContratSaga {
   // --- Dépendances ---
   @Autowired private transient DeadlineManager deadlineManager;
   @Autowired private transient EventGateway eventGateway;
+  @Autowired private transient CommandGateway commandGateway;
 
   // --- État interne de la Saga (persisté par Axon) ---
   private String contratId;
@@ -108,16 +112,29 @@ public class SoldeContratSaga {
     planifierProchaineVerification();
   }
 
-  // 4. FIN DE LA SAGA
-  @EndSaga
+  // Plus de @EndSaga ici ! La saga reste active pour surveiller la clôture financière.
   @SagaEventHandler(associationProperty = "contratId")
   public void on(ContratFinishedEvent evt) {
     System.out.println(
-        "Saga [Contrat " + evt.contratId() + "]: Contrat terminé. Fin de la surveillance.");
-    // Annuler toute deadline en attente pour éviter des exécutions fantômes.
+        "SAGA: Fin de bail détectée. Demande de restitution de caution pour " + evt.contratId());
+
+    // Annuler les vérifications de solde futures
     if (this.deadlineId != null) {
       deadlineManager.cancelSchedule("verificationSolde", this.deadlineId);
     }
+
+    // On ordonne à l'agrégat de recréditer la caution
+    commandGateway.send(new RestituerCautionCommand(evt.contratId()));
+  }
+
+  // C'EST CET ÉVÉNEMENT QUI TERMINE LA SAGA
+  @EndSaga
+  @SagaEventHandler(associationProperty = "contratId")
+  public void on(CompteFinancierClotureEvent evt) {
+    System.out.println(
+        "SAGA: Compte financier clôturé et remboursé ("
+            + evt.montantRembourse()
+            + " FCFA). Fin de la saga.");
   }
 
   // --- Méthode utilitaire ---
