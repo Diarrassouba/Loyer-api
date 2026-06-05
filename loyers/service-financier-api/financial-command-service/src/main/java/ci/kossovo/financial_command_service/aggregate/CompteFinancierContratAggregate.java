@@ -164,22 +164,22 @@ public class CompteFinancierContratAggregate {
     this.soldeCourant = evt.nouveauSolde();
   }
 
-  @CommandHandler
-  public void handle(CloseFinancialAccountCommand cmd) {
-    if (!this.actif) {
-      throw new IllegalStateException("Le compte financier de ce contrat est déjà clôturé.");
-    }
-    if (this.soldeCourant.compareTo(BigDecimal.ZERO) < 0) {
-      throw new IllegalStateException("Impossible de clôturer le compte : solde négatif.");
-    }
+  // @CommandHandler
+  // public void handle(CloseFinancialAccountCommand cmd) {
+  //   if (!this.actif) {
+  //     throw new IllegalStateException("Le compte financier de ce contrat est déjà clôturé.");
+  //   }
+  //   if (this.soldeCourant.compareTo(BigDecimal.ZERO) < 0) {
+  //     throw new IllegalStateException("Impossible de clôturer le compte : solde négatif.");
+  //   }
 
-    AggregateLifecycle.apply(new FinancialAccountCloturedEvent(this.contratId, this.locataireId));
-  }
+  //   AggregateLifecycle.apply(new FinancialAccountCloturedEvent(this.contratId, this.locataireId));
+  // }
 
-  @EventSourcingHandler
-  public void on(FinancialAccountCloturedEvent evt) {
-    this.actif = false;
-  }
+  // @EventSourcingHandler
+  // public void on(FinancialAccountCloturedEvent evt) {
+  //   this.actif = false;
+  // }
 
     @CommandHandler
     public void handle(RestituerCautionCommand cmd) {

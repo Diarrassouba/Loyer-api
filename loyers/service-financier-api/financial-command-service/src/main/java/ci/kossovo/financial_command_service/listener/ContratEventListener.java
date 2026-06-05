@@ -1,9 +1,9 @@
 package ci.kossovo.financial_command_service.listener;
 
-import ci.kossovo.loyer_core_api.commands.financial.CloseFinancialAccountCommand;
+import ci.kossovo.loyer_core_api.commands.financial.FacturerDegatsCommand;
 import ci.kossovo.loyer_core_api.commands.financial.InitializeFinancialAccountCommand;
 import ci.kossovo.loyer_core_api.events.locations.ContratCreatedEvent;
-import ci.kossovo.loyer_core_api.events.locations.ContratFinishedEvent;
+import ci.kossovo.loyer_core_api.events.raiting.DegatsConstatesEvent;
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.axonframework.config.ProcessingGroup;
 import org.axonframework.eventhandling.EventHandler;
@@ -61,13 +61,20 @@ public class ContratEventListener {
             });
   }
 
+  /**
+   * GESTIONNAIRE 2 : Écoute les dégradations lors de l'état des lieux (la fin du bail). Déclenche
+   * la facturation automatique des réparations sur la caution.
+   */
   @EventHandler
-  public void on(ContratFinishedEvent evt) {
-    System.out.println("EVENT LISTENER: ContratFinishedEvent reçu pour contrat " + evt.contratId());
-    // Ici, vous pourriez envoyer une commande pour clôturer le compte financier associé, par
-    // exemple :
-    // commandGateway.send(new CloseFinancialAccountCommand(evt.contratId()));
-    CloseFinancialAccountCommand cmd = new CloseFinancialAccountCommand(evt.contratId());
-    commandGateway.send(cmd);
+  public void on(DegatsConstatesEvent evt) {
+    System.out.println(
+        "FINANCE LISTENER: DegatsConstatesEvent reçu pour le contrat: "
+            + evt.contratId()
+            + " d'un montant de "
+            + evt.montant()
+            + " FCFA");
+
+    commandGateway.send(
+        new FacturerDegatsCommand(evt.contratId(), evt.montant(), evt.description()));
   }
 }
