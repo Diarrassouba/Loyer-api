@@ -19,6 +19,7 @@ import ci.kossovo.loyer_core_api.events.locations.ContratCreatedEvent;
 import ci.kossovo.loyer_core_api.events.locations.ContratFinishedEvent;
 import ci.kossovo.loyer_core_api.events.locations.LocataireCreatedEvent;
 import jakarta.persistence.EntityNotFoundException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -62,6 +63,20 @@ public class ContratServiceImpl implements ContratService {
     // 1. Validations Métier (Exécutées via des pipelines fonctionnels)
     validerCoherenceIds(requestDTO);
 
+    // 2. NOUVELLE VALIDATION : L'avance doit être >= 1 mois de loyer (Sans if/else)
+    Optional.of(requestDTO.montantAvance())
+        .filter(avance -> avance.compareTo(requestDTO.montantLoyerBase()) < 0)
+        .ifPresent(
+            err -> {
+              throw new IllegalArgumentException(
+                  "L'avance de loyer doit être au minimum d'un mois de loyer ("
+                      + requestDTO.montantLoyerBase()
+                      + " FCFA).");
+            });
+
+    // 3. Calcul automatique de la caution (2 mois de loyer)
+    BigDecimal cautionCalculee = requestDTO.montantLoyerBase().multiply(BigDecimal.valueOf(2));
+
     // Si maisonId est présent, lance la validation Maison
     Optional.ofNullable(requestDTO.maisonId()).ifPresent(this::validerDisponibiliteMaison);
 
@@ -72,18 +87,19 @@ public class ContratServiceImpl implements ContratService {
     // Valide l'historique du locataire
     Optional.ofNullable(requestDTO.locataireId()).ifPresent(this::validerHistoriqueLocataire);
 
-    // 2. Détermination des valeurs dynamiques (Sans if/else)
+    // 4. Détermination des valeurs dynamiques (Sans if/else)
     String typeBien =
         Optional.ofNullable(requestDTO.maisonId()).map(id -> "MAISON").orElse("APPARTEMENT");
 
     String bienId = Optional.ofNullable(requestDTO.maisonId()).orElse(requestDTO.appartementId());
 
-    // 3. Persistance
+    // 5. Persistance
     ContratLocation contrat = mapper.toContratLocation(requestDTO);
     contrat.setTypeBien(typeBien);
+    contrat.setMontantCaution(cautionCalculee); // Enregistrement de la caution calculée
     ContratLocation savedContrat = contratRepository.save(contrat);
 
-    // 4. Publication de l'événement
+    // 6. Publication de l'événement
     eventGateway.publish(
         new ContratCreatedEvent(
             savedContrat.getId(),
@@ -91,6 +107,8 @@ public class ContratServiceImpl implements ContratService {
             bienId,
             typeBien,
             savedContrat.getMontantLoyerBase(),
+            cautionCalculee, // Publication de la caution calculée
+            savedContrat.getMontantAvance(), // Publication de l'avance saisie
             savedContrat.getDateDebut()));
 
     return mapper.toContratResponseDTO(savedContrat);

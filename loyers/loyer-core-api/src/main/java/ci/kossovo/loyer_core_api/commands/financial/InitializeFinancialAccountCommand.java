@@ -9,4 +9,6 @@ public record InitializeFinancialAccountCommand(
         String contratId,
     String locataireId,
     String bienId,
-    BigDecimal montantLoyerMensuel) {}
+    BigDecimal montantLoyerMensuel,
+    BigDecimal montantCaution,
+    BigDecimal montantAvance) {}

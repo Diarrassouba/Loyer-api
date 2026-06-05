@@ -40,6 +40,9 @@ public class DisponibiliteProjectionTest {
     // --- ARRANGE ---
     String maisonId = "maison-villa";
     String contratId = "contrat-global";
+    BigDecimal montantLoyerMensuel = new BigDecimal("1000");
+    BigDecimal montantCaution = montantLoyerMensuel.multiply(BigDecimal.valueOf(2));
+    BigDecimal montantAvance = new BigDecimal("2000");
 
     // --- ACT : Création ---
     projection.on(
@@ -53,7 +56,14 @@ public class DisponibiliteProjectionTest {
     // --- ACT : Location de la maison ---
     projection.on(
         new ContratCreatedEvent(
-            contratId, "loc-1", maisonId, "MAISON", BigDecimal.TEN, LocalDate.now()));
+            contratId,
+            "loc-1",
+            maisonId,
+            "MAISON",
+            BigDecimal.TEN,
+            montantAvance,
+            montantCaution,
+            LocalDate.now()));
 
     // --- ASSERT : Location ---
     MaisonDispoView maisonLouee = maisonRepo.findById(maisonId).orElseThrow();
@@ -76,6 +86,9 @@ public class DisponibiliteProjectionTest {
     String apt1Id = "apt-101";
     String apt2Id = "apt-102";
     String contratApt1 = "contrat-101";
+    BigDecimal montantLoyerMensuel = new BigDecimal("1000");
+    BigDecimal montantCaution = montantLoyerMensuel.multiply(BigDecimal.valueOf(2));
+    BigDecimal montantAvance = new BigDecimal("2000");
 
     // Création du parent et des enfants
     projection.on(
@@ -101,7 +114,14 @@ public class DisponibiliteProjectionTest {
     // --- ACT : Location d'un seul appartement ---
     projection.on(
         new ContratCreatedEvent(
-            contratApt1, "loc-1", apt1Id, "APPARTEMENT", BigDecimal.TEN, LocalDate.now()));
+            contratApt1,
+            "loc-1",
+            apt1Id,
+            "APPARTEMENT",
+            BigDecimal.TEN,
+            montantAvance,
+            montantCaution,
+            LocalDate.now()));
 
     // --- ASSERT : Mise à jour enfant ET parent ---
     // Vérification de l'enfant

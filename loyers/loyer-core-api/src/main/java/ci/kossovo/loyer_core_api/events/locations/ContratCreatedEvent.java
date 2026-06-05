@@ -5,9 +5,12 @@ import java.time.LocalDate;
 
 // Événement publié lors de la création d'un contrat.
 // Il contient toutes les infos dont le service financier a besoin.
-public record ContratCreatedEvent(String contratId, String locataireId, String bienId, // ID de la maison ou de
-                                                                                       // l'appartement
-        String typeBien, // "MAISON" ou "APPARTEMENT"
-        BigDecimal montantLoyerMensuel, LocalDate dateDebut) {
-
-}
+public record   ContratCreatedEvent(
+    String contratId,
+    String locataireId,
+    String bienId, // ID de la maison ou de // l'appartement
+    String typeBien, // "MAISON" ou "APPARTEMENT"
+    BigDecimal montantLoyerMensuel,
+    BigDecimal montantCaution,
+    BigDecimal montantAvance,
+    LocalDate dateDebut) {}

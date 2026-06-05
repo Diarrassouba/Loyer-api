@@ -13,7 +13,10 @@ import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.UnitValue;
 import java.io.ByteArrayOutputStream;
+import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.Objects;
 import org.springframework.stereotype.Service;
 
@@ -84,7 +87,8 @@ public class PdfGeneratorService {
       tableDetails.addCell(new Cell(1, 2).setBorder(Border.NO_BORDER).setMinHeight(10f));
 
       ajouterLigneTableau(tableDetails, "Contrat N° :", recu.contratId(), true);
-      ajouterLigneTableau(tableDetails, "Montant payé :", recu.montantPaye() + " FCFA", false);
+      ajouterLigneTableau(
+          tableDetails, "Montant payé :", formatMontant(recu.montantPaye()) + " FCFA", false);
 
       // Mise en évidence du statut du compte
       Cell labelStatut =
@@ -221,7 +225,7 @@ public class PdfGeneratorService {
       // Mise en évidence du montant payé
       Cell montantCell =
           new Cell()
-              .add(new Paragraph(recu.montantPaye() + " FCFA").setBold())
+              .add(new Paragraph(formatMontant(recu.montantPaye()) + " FCFA").setBold())
               .setBorder(new SolidBorder(ColorConstants.GRAY, 1))
               .setPadding(5);
       tableDetails.addCell(montantCell);
@@ -315,5 +319,13 @@ public class PdfGeneratorService {
   // --- Méthode utilitaire commune ---
   private String safeString(Object value) {
     return Objects.toString(value, "");
+  }
+
+  // Formate le montant en millions de FCFA (ex: 1 500 000 => "1.5M FCFA")
+  private String formatMontant(BigDecimal montant) {
+    if (montant == null) return "";
+    NumberFormat nf = NumberFormat.getInstance(Locale.FRANCE);
+    nf.setGroupingUsed(true); // active les séparateurs de milliers
+    return nf.format(montant);
   }
 }

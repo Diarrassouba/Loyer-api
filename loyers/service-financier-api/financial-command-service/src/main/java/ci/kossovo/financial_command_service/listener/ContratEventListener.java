@@ -37,7 +37,12 @@ public class ContratEventListener {
 
     InitializeFinancialAccountCommand cmd =
         new InitializeFinancialAccountCommand(
-            evt.contratId(), evt.locataireId(), evt.bienId(), evt.montantLoyerMensuel());
+            evt.contratId(),
+            evt.locataireId(),
+            evt.bienId(),
+            evt.montantLoyerMensuel(),
+            evt.montantCaution(),
+            evt.montantAvance());
 
     // Envoie la commande pour créer une nouvelle instance de l'agrégat.
     // 2. LOG CRUCIAL : Que se passe-t-il quand on envoie la commande ?

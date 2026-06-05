@@ -83,7 +83,12 @@ public class TenancyControllerIntegrationTest {
     // 2. Préparer la requête
     ContratRequestDTO requestDTO =
         new ContratRequestDTO(
-            LocalDate.now(), new BigDecimal("1200"), "loc-ok-1", "apt-dispo-1", null);
+            LocalDate.now(),
+            new BigDecimal("1200"),
+            "loc-ok-1",
+            "apt-dispo-1",
+            null,
+            new BigDecimal("2400"));
 
     // Act & Assert
     mockMvc
@@ -109,7 +114,8 @@ public class TenancyControllerIntegrationTest {
     bienLoue.setStatut(DisponibiliteBien.Statut.LOUE);
     disponibiliteRepository.save(bienLoue);
     ContratRequestDTO requestDTO =
-        new ContratRequestDTO(LocalDate.now(), new BigDecimal("1200"), "loc-1", bienId, null);
+        new ContratRequestDTO(
+            LocalDate.now(), new BigDecimal("1200"), "loc-1", bienId, null, new BigDecimal("2400"));
 
     // Act & Assert
     mockMvc
@@ -147,7 +153,13 @@ public class TenancyControllerIntegrationTest {
     historiqueRepository.save(mauvaisLocataire);
 
     ContratRequestDTO requestDTO =
-        new ContratRequestDTO(LocalDate.now(), new BigDecimal("1000"), locataireId, "apt-1", null);
+        new ContratRequestDTO(
+            LocalDate.now(),
+            new BigDecimal("1000"),
+            locataireId,
+            "apt-1",
+            null,
+            new BigDecimal("2000"));
 
     // Act & Assert
     mockMvc
@@ -171,7 +183,13 @@ public class TenancyControllerIntegrationTest {
     // Arrange
     // Montant du loyer négatif, ce qui viole @Positive
     ContratRequestDTO requestDTO =
-        new ContratRequestDTO(LocalDate.now(), new BigDecimal("-100"), "loc-1", "apt-1", null);
+        new ContratRequestDTO(
+            LocalDate.now(),
+            new BigDecimal("-100"),
+            "loc-1",
+            "apt-1",
+            null,
+            new BigDecimal("2000"));
 
     // Act & Assert
     mockMvc
@@ -199,7 +217,12 @@ public class TenancyControllerIntegrationTest {
     // 2. Préparer la requête
     ContratRequestDTO requestDTO =
         new ContratRequestDTO(
-            LocalDate.now(), new BigDecimal("1200"), "loc-ok-1", "apt-loue-1", null);
+            LocalDate.now(),
+            new BigDecimal("1200"),
+            "loc-ok-1",
+            "apt-loue-1",
+            null,
+            new BigDecimal("2400"));
 
     // Act & Assert
     mockMvc

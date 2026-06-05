@@ -1,18 +1,26 @@
 package ci.kossovo.financial_command_service.aggregate;
 
 import ci.kossovo.loyer_core_api.commands.financial.CloseFinancialAccountCommand;
+import ci.kossovo.loyer_core_api.commands.financial.EnregistrerRemboursementFinalCommand;
+import ci.kossovo.loyer_core_api.commands.financial.FacturerDegatsCommand;
 import ci.kossovo.loyer_core_api.commands.financial.GenerateMonthlyRentCommand;
 import ci.kossovo.loyer_core_api.commands.financial.InitializeFinancialAccountCommand;
 import ci.kossovo.loyer_core_api.commands.financial.RecordPaymentCommand;
+import ci.kossovo.loyer_core_api.commands.financial.RestituerCautionCommand;
+import ci.kossovo.loyer_core_api.events.financial.CautionRestitueeEvent;
+import ci.kossovo.loyer_core_api.events.financial.CompteFinancierClotureEvent;
 import ci.kossovo.loyer_core_api.events.financial.FinancialAccountCloturedEvent;
 import ci.kossovo.loyer_core_api.events.financial.FinancialAccountInitialisedEvent;
 import ci.kossovo.loyer_core_api.events.financial.PaymentInAdvanceDetectEvent;
 import ci.kossovo.loyer_core_api.events.financial.PaymentReceivedEvent;
 import ci.kossovo.loyer_core_api.events.financial.RentMonthlyGeneredEvent;
+import ci.kossovo.loyer_core_api.events.raiting.DegatsFacturesEvent;
+
 import java.math.BigDecimal;
 import java.time.YearMonth;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.eventsourcing.EventSourcingHandler;
@@ -34,6 +42,7 @@ public class CompteFinancierContratAggregate {
   private BigDecimal soldeCourant;
   // Clé : mois/année, Valeur : montant du loyer dû pour ce mois
   private Map<YearMonth, BigDecimal> loyersDus;
+  private BigDecimal montantCaution; // Stocké à l'initialisation
   private boolean actif;
 
   // Constructeur par défaut requis par Axon
@@ -42,6 +51,9 @@ public class CompteFinancierContratAggregate {
   // 1. Gestionnaire de la commande d'initialisation
   @CommandHandler
   public CompteFinancierContratAggregate(InitializeFinancialAccountCommand cmd) {
+    // Le solde initial est égal à la caution en négatif (le locataire commence avec cette dette)
+    BigDecimal soldeInitial = cmd.montantCaution().negate();
+
     // Logique de validation
     if (cmd.montantLoyerMensuel().compareTo(BigDecimal.ZERO) <= 0) {
       throw new IllegalArgumentException("Le montant du loyer doit être positif.");
@@ -50,7 +62,14 @@ public class CompteFinancierContratAggregate {
     // Publication de l'événement
     AggregateLifecycle.apply(
         new FinancialAccountInitialisedEvent(
-            cmd.contratId(), cmd.locataireId(), cmd.bienId(), cmd.montantLoyerMensuel()));
+            cmd.contratId(),
+            cmd.locataireId(),
+            cmd.bienId(),
+            cmd.montantLoyerMensuel(),
+            cmd.montantCaution(),
+            cmd.montantAvance(),
+            soldeInitial // Transmet le solde de départ (ex: -200 000 FCFA)
+            ));
   }
 
   // 2. Gestionnaire de l'événement d'initialisation
@@ -59,7 +78,8 @@ public class CompteFinancierContratAggregate {
     this.contratId = evt.contratId();
     this.locataireId = evt.locataireId();
     this.montantLoyerMensuelDeBase = evt.montantLoyerMensuel();
-    this.soldeCourant = BigDecimal.ZERO; // Au départ, le locataire n'a ni dette ni avance
+    this.montantCaution = evt.montantCaution(); // On stocke la caution pour référence future
+    this.soldeCourant = evt.soldeInitial(); // Le solde de départ de l'agrégat est négatif (dette de caution)
     this.loyersDus = new HashMap<>(); // Initialisation d'une map vide
     this.actif = true;
   }
@@ -160,4 +180,60 @@ public class CompteFinancierContratAggregate {
   public void on(FinancialAccountCloturedEvent evt) {
     this.actif = false;
   }
+
+    @CommandHandler
+    public void handle(RestituerCautionCommand cmd) {
+        // Règle : Le compte doit être actif pour restituer la caution
+        Optional.of(this.actif)
+                .filter(Boolean::booleanValue)
+                .orElseThrow(() -> new IllegalStateException("Le compte est déjà clôturé."));
+
+        BigDecimal nouveauSolde = this.soldeCourant.add(this.montantCaution); // On recrédite la caution
+        
+        AggregateLifecycle.apply(new CautionRestitueeEvent(this.contratId, this.montantCaution, nouveauSolde));
+    }
+
+    @EventSourcingHandler
+    public void on(CautionRestitueeEvent evt) {
+        this.soldeCourant = evt.nouveauSolde();
+    }
+
+
+     @CommandHandler
+    public void handle(FacturerDegatsCommand cmd) {
+        Optional.of(this.actif)
+                .filter(Boolean::booleanValue)
+                .orElseThrow(() -> new IllegalStateException("Le compte est déjà clôturé."));
+
+        BigDecimal nouveauSolde = this.soldeCourant.subtract(cmd.montant()); // On débite les dégâts
+        
+        AggregateLifecycle.apply(new DegatsFacturesEvent(this.contratId, cmd.montant(), cmd.description(), nouveauSolde));
+    }
+
+     @EventSourcingHandler
+    public void on(DegatsFacturesEvent evt) {
+        this.soldeCourant = evt.nouveauSolde();
+    }
+
+
+
+
+     @CommandHandler
+    public void handle(EnregistrerRemboursementFinalCommand cmd) {
+        // On ne peut clôturer que si le solde est positif (on rend l'argent) ou nul
+        Optional.of(this.soldeCourant)
+                .filter(solde -> solde.compareTo(BigDecimal.ZERO) >= 0)
+                .orElseThrow(() -> new IllegalStateException("Impossible de clôturer : le locataire a encore des dettes (" + this.soldeCourant + " FCFA)."));
+
+        BigDecimal montantRembourse = this.soldeCourant; // On lui rend tout le crédit restant
+        BigDecimal nouveauSolde = BigDecimal.ZERO; // Le solde revient à 0
+
+        AggregateLifecycle.apply(new CompteFinancierClotureEvent(this.contratId, montantRembourse, nouveauSolde));
+    }
+
+     @EventSourcingHandler
+    public void on(CompteFinancierClotureEvent evt) {
+        this.soldeCourant = evt.nouveauSolde();
+        this.actif = false; // Désactivation définitive du compte financier
+    }
 }

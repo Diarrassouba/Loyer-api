@@ -4,12 +4,9 @@ import ci.kossovo.locataire_rest_api.dtos.ContratRequestDTO;
 import ci.kossovo.locataire_rest_api.dtos.ContratResponseDTO;
 import ci.kossovo.locataire_rest_api.dtos.LocataireRequestDTO;
 import ci.kossovo.locataire_rest_api.dtos.LocataireResponseDto;
-import ci.kossovo.locataire_rest_api.models.MaisonDispoView;
-
 import java.util.List;
 
-public interface 
-ContratService {
+public interface ContratService {
 
   // --- Locataire ---
   LocataireResponseDto createLocataire(LocataireRequestDTO locataireDTO);

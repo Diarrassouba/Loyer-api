@@ -32,4 +32,8 @@ public class ContratLocation {
 
   // Indique si le contrat est en cours
   private boolean actif = true;
+
+  // Dans ContratLocation.java
+  private BigDecimal montantCaution; // Stockera la valeur de 2 mois de loyer
+  private BigDecimal montantAvance; // Stockera la valeur de l'avance (minimum 1 mois)
 }

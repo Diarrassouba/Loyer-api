@@ -33,6 +33,8 @@ public class CompteFinancierContratAggregateTest {
     String contratId = "contrat-1";
     String locataireId = "loc-1";
     String bienId = "bien-1";
+    BigDecimal montantLoyerMensuel = new BigDecimal("1000");
+    BigDecimal montantAvance = new BigDecimal("2000");
 
     fixture
         .givenNoPriorActivity() // État initial : aucun événement passé
@@ -41,14 +43,31 @@ public class CompteFinancierContratAggregateTest {
                 contratId,
                 locataireId,
                 bienId,
-                new BigDecimal("1000"))) // Quand cette commande arrive...
+                montantLoyerMensuel,
+                new BigDecimal("2000"), // montantCaution
+                montantAvance)) // Quand cette commande arrive...
         .expectSuccessfulHandlerExecution() // ... s'attendre à ce qu'elle soit gérée sans erreur
         .expectEvents(
             new FinancialAccountInitialisedEvent(
                 contratId,
                 locataireId,
                 bienId,
-                new BigDecimal("1000"))); // ... et que cet événement soit publié.
+                montantLoyerMensuel,
+                new BigDecimal("2000"), // montantCaution
+                montantAvance,
+                montantAvance.negate() // soldeInitial = -montantCaution
+                )) // Quand cette commande arrive...
+        .expectSuccessfulHandlerExecution() // ... s'attendre à ce qu'elle soit gérée sans erreur
+        .expectEvents(
+            new FinancialAccountInitialisedEvent(
+                contratId,
+                locataireId,
+                bienId,
+                montantLoyerMensuel,
+                new BigDecimal("2000"), // montantCaution
+                montantAvance,
+                montantAvance.negate() // soldeInitial = -montantCaution
+                )); // ... et que cet événement soit publié.
   }
 
   @Test
@@ -62,11 +81,22 @@ public class CompteFinancierContratAggregateTest {
         .givenNoPriorActivity()
         .when(
             new InitializeFinancialAccountCommand(
-                contratId, locataireId, bienId, new BigDecimal("800")))
+                contratId,
+                locataireId,
+                bienId,
+                new BigDecimal("800"),
+                new BigDecimal("1600"),
+                new BigDecimal("800")))
         .expectSuccessfulHandlerExecution()
         .expectEvents(
             new FinancialAccountInitialisedEvent(
-                contratId, locataireId, bienId, new BigDecimal("800")));
+                contratId,
+                locataireId,
+                bienId,
+                new BigDecimal("800"),
+                new BigDecimal("1600"),
+                new BigDecimal("800"),
+                new BigDecimal("-1600")));
   }
 
   @Test
@@ -74,7 +104,14 @@ public class CompteFinancierContratAggregateTest {
   void shouldRejectInitializationIfRentIsNegative() {
     fixture
         .givenNoPriorActivity()
-        .when(new InitializeFinancialAccountCommand("c1", "l1", "b1", new BigDecimal("-100")))
+        .when(
+            new InitializeFinancialAccountCommand(
+                "c1",
+                "l1",
+                "b1",
+                new BigDecimal("-100"),
+                new BigDecimal("200"),
+                new BigDecimal("100")))
         .expectException(IllegalArgumentException.class)
         .expectExceptionMessage("Le montant du loyer doit être positif.");
   }
@@ -91,7 +128,13 @@ public class CompteFinancierContratAggregateTest {
     fixture
         .given(
             new FinancialAccountInitialisedEvent(
-                contratId, locataireId, bienId, new BigDecimal("700")))
+                contratId,
+                locataireId,
+                bienId,
+                new BigDecimal("700"),
+                new BigDecimal("1400"),
+                new BigDecimal("700"),
+                new BigDecimal("-1400")))
         // When : on envoie une commande pour générer le loyer du mois
         .when(
             new GenerateMonthlyRentCommand(
@@ -99,7 +142,12 @@ public class CompteFinancierContratAggregateTest {
         .expectSuccessfulHandlerExecution()
         .expectEvents(
             new RentMonthlyGeneredEvent(
-                contratId, loyerId, locataireId, YearMonth.now(), new BigDecimal("700"), new BigDecimal("-700")));
+                contratId,
+                loyerId,
+                locataireId,
+                YearMonth.now(),
+                new BigDecimal("700"),
+                new BigDecimal("-700")));
   }
 
   @Test
@@ -113,9 +161,20 @@ public class CompteFinancierContratAggregateTest {
     fixture
         .given(
             new FinancialAccountInitialisedEvent(
-                contratId, locataireId, bienId, new BigDecimal("700")),
+                contratId,
+                locataireId,
+                bienId,
+                new BigDecimal("700"),
+                new BigDecimal("1400"),
+                new BigDecimal("700"),
+                new BigDecimal("-1400")),
             new RentMonthlyGeneredEvent(
-                contratId, UUID.randomUUID(), locataireId, YearMonth.now(), new BigDecimal("700"), new BigDecimal("-700")))
+                contratId,
+                UUID.randomUUID(),
+                locataireId,
+                YearMonth.now(),
+                new BigDecimal("700"),
+                new BigDecimal("-700")))
         .when(
             new RecordPaymentCommand(
                 contratId, paiementId, new BigDecimal("500"), LocalDate.now(), null))
@@ -139,7 +198,13 @@ public class CompteFinancierContratAggregateTest {
     fixture
         .given(
             new FinancialAccountInitialisedEvent(
-                contratId, "loc-1", "bien-1", new BigDecimal("700")))
+                contratId,
+                "loc-1",
+                "bien-1",
+                new BigDecimal("700"),
+                new BigDecimal("1400"),
+                new BigDecimal("700"),
+                new BigDecimal("-1400")))
         .when(
             new RecordPaymentCommand(
                 contratId, UUID.randomUUID(), new BigDecimal("-100"), LocalDate.now(), null))

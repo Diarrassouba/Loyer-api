@@ -30,14 +30,32 @@ public class HistoriqueLocataireProjectionTest {
     projection = new HistoriqueLocataireProjection(historiqueRepository);
 
     String locataireId = "loc-525";
+    BigDecimal montantLoyerMensuel = new BigDecimal("1000");
+    BigDecimal montantAvance = new BigDecimal("2000");
+    BigDecimal montantCaution =
+        montantLoyerMensuel.multiply(BigDecimal.valueOf(2)); // Caution = 2 mois de loyer
 
     // Création des événements
     ContratCreatedEvent premierContrat =
         new ContratCreatedEvent(
-            "c1", locataireId, "apt-1", "APPARTEMENT", BigDecimal.TEN, LocalDate.now());
+            "c1",
+            locataireId,
+            "apt-1",
+            "APPARTEMENT",
+            BigDecimal.TEN,
+            montantAvance,
+            montantCaution,
+            LocalDate.now());
     ContratCreatedEvent deuxiemeContrat =
         new ContratCreatedEvent(
-            "c2", locataireId, "apt-2", "APPARTEMENT", BigDecimal.TEN, LocalDate.now());
+            "c2",
+            locataireId,
+            "apt-2",
+            "APPARTEMENT",
+            BigDecimal.TEN,
+            montantAvance,
+            montantCaution,
+            LocalDate.now());
     LatePaymentObservedEvent premierRetard =
         new LatePaymentObservedEvent("c1", locataireId, YearMonth.now(), BigDecimal.ONE);
     LatePaymentObservedEvent deuxiemeRetard =

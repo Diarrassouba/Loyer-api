@@ -11,7 +11,7 @@ import ci.kossovo.financial_query_service.repository.TransactionRepository;
 import ci.kossovo.loyer_core_api.events.financial.FinancialAccountInitialisedEvent;
 import ci.kossovo.loyer_core_api.events.financial.PaymentReceivedEvent;
 import ci.kossovo.loyer_core_api.events.financial.RentMonthlyGeneredEvent;
-import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import org.axonframework.config.ProcessingGroup;
 import org.axonframework.eventhandling.EventHandler;
@@ -42,12 +42,22 @@ public class QueryFinancialProjection {
   @EventHandler
   public void on(FinancialAccountInitialisedEvent evt) {
 
-    // 1. Créer la synthèse initiale
+    // 1. Créer la synthèse avec le solde de départ (le solde négatif de la caution)
     SyntheseFinanciereDocument synthese =
         new SyntheseFinanciereDocument(evt.contratId(), evt.locataireId(), evt.bienId());
-    synthese.setMontantLoyerMensuel(evt.montantLoyerMensuel());
-    synthese.setSolde(BigDecimal.ZERO);
+    synthese.setSolde(evt.soldeInitial()); // Ex: -200 000 FCFA
     syntheseFinanciereRepository.save(synthese);
+
+    // 2. Ajouter une transaction d'historique pour expliquer la caution
+    TransactionDocument txCaution = new TransactionDocument();
+    txCaution.setTransactionId(UUID.randomUUID().toString());
+    txCaution.setContratId(evt.contratId());
+    txCaution.setDate(LocalDateTime.now());
+    txCaution.setDescription("Facturation Dépôt de Garantie (Caution 2 mois)");
+    txCaution.setType("CAUTION");
+    txCaution.setMontant(evt.montantCaution().negate()); // Négatif
+    txCaution.setSoldeApresTransaction(evt.soldeInitial());
+    transactionRepository.save(txCaution);
   }
 
   @EventHandler

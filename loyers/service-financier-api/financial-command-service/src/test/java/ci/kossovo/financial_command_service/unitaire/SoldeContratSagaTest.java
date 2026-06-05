@@ -26,10 +26,35 @@ public class SoldeContratSagaTest {
   @Test
   @DisplayName("Doit démarrer et planifier une vérification à la création d'un contrat")
   void shouldStartAndScheduleCheckOnContratCreation() {
+    BigDecimal montantLoyerMensuel = new BigDecimal("1000");
+    BigDecimal montantAvance = new BigDecimal("2000");
+
     fixture
         .givenNoPriorActivity()
         .whenPublishingA(
-            new ContratCreatedEvent("c1", "loc1", "apt1", "APT", BigDecimal.TEN, LocalDate.now()))
+            new ContratCreatedEvent(
+                "contrat-1",
+                "loc-1",
+                "apt-1",
+                "APPARTEMENT",
+                montantLoyerMensuel,
+                montantAvance,
+                montantLoyerMensuel.multiply(BigDecimal.valueOf(2)),
+                LocalDate.now()))
+        .expectActiveSagas(1)
+        .expectScheduledDeadline(Duration.ofDays(7), "verificationSolde");
+    fixture
+        .givenNoPriorActivity()
+        .whenPublishingA(
+            new ContratCreatedEvent(
+                "contrat-1",
+                "loc-1",
+                "apt-1",
+                "APPARTEMENT",
+                montantLoyerMensuel,
+                montantAvance,
+                montantLoyerMensuel.multiply(BigDecimal.valueOf(2)),
+                LocalDate.now()))
         .expectActiveSagas(1)
         .expectScheduledDeadline(Duration.ofDays(7), "verificationSolde");
   }
@@ -37,26 +62,57 @@ public class SoldeContratSagaTest {
   @Test
   @DisplayName("Doit démarrer et planifier une deadline à la création du contrat")
   void shouldStartAndScheduleDeadlineOnContratCreation() {
+    BigDecimal montantLoyerMensuel = new BigDecimal("1000");
+    BigDecimal montantAvance = new BigDecimal("2000");
     fixture
         .givenNoPriorActivity()
         .whenPublishingA(
             new ContratCreatedEvent(
-                "contrat-1", "loc-1", "apt-1", "APPARTEMENT", BigDecimal.TEN, LocalDate.now()))
-        .expectActiveSagas(1) // Vérifie que la saga est bien vivante
-        .expectScheduledDeadline(
-            Duration.ofDays(7), "verificationSolde"); // Vérifie la planification
+                "contrat-1",
+                "loc-1",
+                "apt-1",
+                "APPARTEMENT",
+                montantLoyerMensuel,
+                montantAvance,
+                montantLoyerMensuel.multiply(BigDecimal.valueOf(2)),
+                LocalDate.now()))
+        .expectActiveSagas(1)
+        .expectScheduledDeadline(Duration.ofDays(7), "verificationSolde");
   }
+
+  /*  @Test
+  @DisplayName("Doit démarrer et planifier une deadline à la création du contrat")
+  void shouldStartAndScheduleDeadlineOnContratCreation() {
+        BigDecimal montantLoyerMensuel = new BigDecimal("1000");
+    BigDecimal montantAvance = new BigDecimal("2000");
+    fixture
+        .givenNoPriorActivity()
+        .whenPublishingA(
+            new ContratCreatedEvent(
+                "contrat-1", "loc-1", "apt-1", "APPARTEMENT", montantLoyerMensuel, montantAvance,montantLoyerMensuel.multiply(BigDecimal.valueOf(2)), LocalDate.now()))
+        .expectActiveSagas(1)
+        .expectScheduledDeadline(Duration.ofDays(7), "verificationSolde");
+  } */
 
   @Test
   @DisplayName("Doit publier un événement de retard si le solde est négatif après la deadline")
   void shouldPublishLatePaymentEventWhenBalanceIsNegativeAfterDeadline() {
     String contratId = "c1";
     String locataireId = "loc1";
+    BigDecimal montantLoyerMensuel = new BigDecimal("1000");
+    BigDecimal montantAvance = new BigDecimal("2000");
 
     fixture
         .givenAPublished(
             new ContratCreatedEvent(
-                contratId, locataireId, "apt1", "APT", BigDecimal.TEN, LocalDate.now()))
+                contratId,
+                locataireId,
+                "apt1",
+                "APT",
+                montantLoyerMensuel,
+                montantAvance,
+                montantLoyerMensuel.multiply(BigDecimal.valueOf(2)),
+                LocalDate.now()))
         .andThenAPublished(
             new RentMonthlyGeneredEvent(
                 contratId,

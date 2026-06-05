@@ -53,9 +53,11 @@ public class ContratServiceImplTest {
     // Arrange
     String bienId = "apt-123";
     String locataireId = "loc-abc";
+    BigDecimal montantLoyerMensuel = new BigDecimal("1000");
+    BigDecimal montantAvance = new BigDecimal("2000");
     ContratRequestDTO requestDTO =
         new ContratRequestDTO(
-            LocalDate.now(), BigDecimal.valueOf(1000), locataireId, bienId, null);
+            LocalDate.now(), montantLoyerMensuel, locataireId, bienId, null, montantAvance);
 
     ContratLocation contratToSave = new ContratLocation();
     ContratLocation savedContrat = new ContratLocation();
@@ -82,9 +84,11 @@ public class ContratServiceImplTest {
   public void createContrat_shouldFail_whenBienIsLoue() {
     // Arrange
     String bienId = "apt-123";
+    BigDecimal montantLoyerMensuel = new BigDecimal("1000");
+    BigDecimal montantAvance = new BigDecimal("2000");
     ContratRequestDTO requestDTO =
         new ContratRequestDTO(
-            LocalDate.now(), BigDecimal.valueOf(1000), "loc-abc", bienId, null);
+            LocalDate.now(), montantLoyerMensuel, "loc-abc", bienId, null, montantAvance);
 
     // Simuler la projection de disponibilité : le bien est LOUÉ
     DisponibiliteBien bienLoue = new DisponibiliteBien(bienId);
@@ -106,9 +110,11 @@ public class ContratServiceImplTest {
   public void createContrat_shouldFail_whenLocataireHistoryIsBad() {
     // Arrange
     String locataireId = "loc-abc";
+    BigDecimal montantLoyerMensuel = new BigDecimal("1000");
+    BigDecimal montantAvance = new BigDecimal("2000");
     ContratRequestDTO requestDTO =
         new ContratRequestDTO(
-            LocalDate.now(), BigDecimal.valueOf(1000), locataireId, "apt-123", null);
+            LocalDate.now(), montantLoyerMensuel, locataireId, "apt-123", null, montantAvance);
 
     // Simuler la projection d'historique : le locataire a 5 retards
     HistoriqueLocataire mauvaisPayeur = new HistoriqueLocataire(locataireId);
