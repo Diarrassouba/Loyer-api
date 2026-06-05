@@ -58,6 +58,7 @@ public interface TenancyMapper {
       target = "typeBien",
       ignore = true) // Le service définira ce champ en fonction de la présence de maisonId ou
   // appartementId
+  @Mapping(target = "montantCaution", ignore = true) // Calculé dans le service (2 mois de loyer)
   ContratLocation toContratLocation(ContratRequestDTO dto);
 
   /**

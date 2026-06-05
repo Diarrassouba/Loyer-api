@@ -1,6 +1,5 @@
 package ci.kossovo.financial_command_service.aggregate;
 
-import ci.kossovo.loyer_core_api.commands.financial.CloseFinancialAccountCommand;
 import ci.kossovo.loyer_core_api.commands.financial.EnregistrerRemboursementFinalCommand;
 import ci.kossovo.loyer_core_api.commands.financial.FacturerDegatsCommand;
 import ci.kossovo.loyer_core_api.commands.financial.GenerateMonthlyRentCommand;
@@ -10,7 +9,6 @@ import ci.kossovo.loyer_core_api.commands.financial.RestituerCautionCommand;
 import ci.kossovo.loyer_core_api.events.financial.CautionRestitueeEvent;
 import ci.kossovo.loyer_core_api.events.financial.CompteFinancierClotureEvent;
 import ci.kossovo.loyer_core_api.events.financial.DegatsFacturesEvent;
-import ci.kossovo.loyer_core_api.events.financial.FinancialAccountCloturedEvent;
 import ci.kossovo.loyer_core_api.events.financial.FinancialAccountInitialisedEvent;
 import ci.kossovo.loyer_core_api.events.financial.PaymentInAdvanceDetectEvent;
 import ci.kossovo.loyer_core_api.events.financial.PaymentReceivedEvent;
