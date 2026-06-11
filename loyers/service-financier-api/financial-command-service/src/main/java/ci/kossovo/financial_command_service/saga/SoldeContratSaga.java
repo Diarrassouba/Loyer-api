@@ -20,15 +20,21 @@ import org.axonframework.modelling.saga.EndSaga;
 import org.axonframework.modelling.saga.SagaEventHandler;
 import org.axonframework.modelling.saga.StartSaga;
 import org.axonframework.spring.stereotype.Saga;
-import org.springframework.beans.factory.annotation.Autowired;
 
 @Saga
 public class SoldeContratSaga {
 
   // --- Dépendances ---
-  @Autowired private transient DeadlineManager deadlineManager;
-  @Autowired private transient EventGateway eventGateway;
-  @Autowired private transient CommandGateway commandGateway;
+  private final transient DeadlineManager deadlineManager;
+  private final transient EventGateway eventGateway;
+  private final transient CommandGateway commandGateway;
+
+  public SoldeContratSaga(
+      DeadlineManager deadlineManager, EventGateway eventGateway, CommandGateway commandGateway) {
+    this.deadlineManager = deadlineManager;
+    this.eventGateway = eventGateway;
+    this.commandGateway = commandGateway;
+  }
 
   // --- État interne de la Saga (persisté par Axon) ---
   private String contratId;
